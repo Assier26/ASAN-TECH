@@ -1,6 +1,6 @@
 -- 1. Borrar la base de datos existente
 DROP DATABASE IF EXISTS asan_tech;
-
+-- CHUPAMINGAS
 -- 2. Crear la base de datos
 CREATE DATABASE asan_tech;
 USE asan_tech;
