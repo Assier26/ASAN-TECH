@@ -1,92 +1,36 @@
--- phpMyAdmin SQL Dump
--- version 5.2.1
--- https://www.phpmyadmin.net/
---
--- Servidor: 127.0.0.1
--- Tiempo de generación: 22-01-2025 a las 19:31:19
--- Versión del servidor: 10.4.32-MariaDB
--- Versión de PHP: 8.2.12
+-- 1. Borrar la base de datos existente
+DROP DATABASE IF EXISTS asan_tech;
+-- CHUPAMINGAS
+-- 2. Crear la base de datos
+CREATE DATABASE asan_tech;
+USE asan_tech;
 
-SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
-START TRANSACTION;
-SET time_zone = "+00:00";
+-- 3. Crear la tabla 'clientes'
+CREATE TABLE clientes (
+    id_cliente INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    contrasena VARCHAR(15) NOT NULL,
+);
 
+-- 4. Crear la tabla 'servicios'
+CREATE TABLE servicios (
+    id_servicio INT AUTO_INCREMENT PRIMARY KEY,
+    id_cliente INT NOT NULL,
+    nombre_servicio VARCHAR(100) NOT NULL,
+    descripcion TEXT,
+    fecha_inicio DATETIME,
+    fecha_fin DATETIME,
+    costo DECIMAL(10,2),
+    FOREIGN KEY (id_cliente) REFERENCES clientes(id_cliente) ON DELETE CASCADE
+);
 
-/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
-/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!40101 SET NAMES utf8mb4 */;
+-- Ejemplo de datos iniciales (opcional)
+/* INSERT INTO clientes (nombre, apellido, email, telefono, direccion) 
+VALUES 
+('Juan', 'Pérez', 'juan.perez@example.com', '123456789', 'Calle Falsa 123'),
+('María', 'Gómez', 'maria.gomez@example.com', '987654321', 'Avenida Siempre Viva 456');
 
---
--- Base de datos: `asan_tech`
---
-
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `productos`
---
-
-CREATE TABLE `productos` (
-  `id` int(11) NOT NULL,
-  `nombre` varchar(30) DEFAULT NULL,
-  `descripcion` varchar(50) DEFAULT NULL,
-  `precio` double(4,2) DEFAULT NULL,
-  `cantidad` int(11) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_spanish_ci;
-
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `usuarios`
---
-
-CREATE TABLE `usuarios` (
-  `id` int(11) NOT NULL,
-  `nombre` varchar(30) DEFAULT NULL,
-  `contrasena` varchar(10) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_spanish_ci;
-
---
--- Volcado de datos para la tabla `usuarios`
---
-
-INSERT INTO `usuarios` (`id`, `nombre`, `contrasena`) VALUES
-(2, 'Asier', '12345');
-
---
--- Índices para tablas volcadas
---
-
---
--- Indices de la tabla `productos`
---
-ALTER TABLE `productos`
-  ADD PRIMARY KEY (`id`);
-
---
--- Indices de la tabla `usuarios`
---
-ALTER TABLE `usuarios`
-  ADD PRIMARY KEY (`id`);
-
---
--- AUTO_INCREMENT de las tablas volcadas
---
-
---
--- AUTO_INCREMENT de la tabla `productos`
---
-ALTER TABLE `productos`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
-
---
--- AUTO_INCREMENT de la tabla `usuarios`
---
-ALTER TABLE `usuarios`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
-COMMIT;
-
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+INSERT INTO servicios (id_cliente, nombre_servicio, descripcion, fecha_inicio, fecha_fin, costo) 
+VALUES 
+(1, 'Mantenimiento de Servidores', 'Revisión y limpieza de servidores', '2025-01-10', '2025-01-15', 500.00),
+(2, 'Desarrollo Web', 'Creación de una página web corporativa', '2025-01-20', '2025-02-10', 1200.00); */
