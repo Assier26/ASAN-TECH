@@ -44,3 +44,6 @@ sudo docker run -d \
 # Confirmar instalación
 echo "Nextcloud está corriendo en http://$(hostname -I | awk '{print $1}'):8080"
 echo "Accede a esta dirección para completar la instalación."
+
+#Hacer que el inicio del contenedor sea automático
+docker update --restart unless-stopped nextcloud
