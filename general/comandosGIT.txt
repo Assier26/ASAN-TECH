@@ -1,7 +1,7 @@
 # --    COMANDOS DE GIT --
 # -- Credenciales
-git config --global user.email andres.sierra.sanchez@outlook.com
-git config --global user.name "AndresSierra-Oficial"
+git config --global user.email ...
+git config --global user.name "..."
 # Comprobamos los cambios
 git config --list
 
