@@ -64,13 +64,15 @@ git checkout $Rama
 # -----------------------------------------------------------------------
 # -----------------------------------------------------------------------
 # -- Para subir tu rama
-    # -- 1. verificar el estado del reposirotio
+    # -- 1. Verificar la rama
+    git branch
+    # -- 2. verificar el estado del reposirotio
     git status
-    # -- 2. Agregamos los cambios (Estando en el directorio local de nuestra rama)
+    # -- 3. Agregamos los cambios (Estando en el directorio local de nuestra rama)
     git add .
-    # -- 3. Confirmamos cambios
+    # -- 4. Confirmamos cambios
     git commit -m "Descripción de los cambios realizados"
-    # -- 4. Enviar los cambios al repositorio remoto
+    # -- 5. Enviar los cambios al repositorio remoto
     git push origin ramaAndres
 # -----------------------------------------------------------------------
 # -- Para fusionar tu rama con la principal
