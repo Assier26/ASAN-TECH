@@ -30,33 +30,65 @@ git init
 git add .
 git commit -m "Primer commit"
 
-git remote add origin https://github.com/AndresSierra-Oficial/pruega.git
+git remote add origin https://github.com/....
 git branch -M main
 git push -u origin main
 
 # --    Descargar un Repositorio
-git clone https://github.com/Assier26/ASAN-TECH.git
+git clone https://github.com/...
 
 
 # --    Subir cambios
 git push
-# --    Enviar cambios a la rama remota
-git push origin $nuevaCaracteristica
-git push --set-upstream origin master
 # --    Trae o descarga los cambios de github
 git pull
 # -- Mostrar las ramas
 git branch
 # -- Crear rama nueva
-git branch nuevaRama
+git branch $Rama
 # -- Cambiar de rama
-git checkout nuevaRama
-
-
-# --    Unir varias ramas
-git checkout master
-git merge nuevaRama
-git push origin main
+git checkout $Rama
 
 
 
+# -----------------------------------------------------------------------
+# -- Crear tu rama
+    # -- 1. Actualizar la información de las ramas remotas:
+    git fetch
+    # -- 2. Mostrar las ramas
+    git branch
+    # -- 3. Crear y cambiar a la nueva rama para Asier:
+    git checkout -b ramaAsier
+    # -- 4. Enviar los cambios al repositorio remoto
+    git push origin ramaAsier
+# -----------------------------------------------------------------------
+# -----------------------------------------------------------------------
+# -- Para subir tu rama
+    # -- 1. verificar el estado del reposirotio
+    git status
+    # -- 2. Agregamos los cambios (Estando en el directorio local de nuestra rama)
+    git add .
+    # -- 3. Confirmamos cambios
+    git commit -m "Descripción de los cambios realizados"
+    # -- 4. Enviar los cambios al repositorio remoto
+    git push origin ramaAndres
+# -----------------------------------------------------------------------
+# -- Para fusionar tu rama con la principal
+    # -- 1. Actualizar las ramas
+    git fetch
+    # -- 2. Crear una rama previa para verificar que se hace bien
+    git checkout main
+    git pull origin main
+    git checkout -b verificacion-fusion
+    # -- 3. Fusionar la rama deseada en la nueva rama de verificación
+    git merge $ramaAFusionar
+    # -- 4. Añadimos los cambios y confirmamos.
+    git add .
+    git commit -m "Mensaje"
+    # -- 5. Verificamos el contenido de los archivos.
+    # -- 6. Fusionar la rama de verificación con main:
+    git checkout origin main
+    git merge origin verificacion-fusion
+    # -- 7. Enviar los cambios al repositorio remoto:
+    git push origin main
+# -----------------------------------------------------------------------
