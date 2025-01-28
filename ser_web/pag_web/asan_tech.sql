@@ -9,7 +9,7 @@ USE asan_tech;
 CREATE TABLE clientes (
     id_cliente INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
-    contrasena VARCHAR(15) NOT NULL,
+    contrasena VARCHAR(255) NOT NULL
 );
 
 -- 4. Crear la tabla 'servicios'
