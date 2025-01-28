@@ -1,10 +1,16 @@
-# ASAN-TECH
-Repositorio creación TFG ASAN-TECH
-#README PRINCIPAL
-En este Readme iremos aportando datos y detalles generales del proyecto, e indicaremos la funcionalidad de cada branch
-# ------------------------------------------------------------
-# ----------    CONCEPTO GENERALES DEL PROYECTO    -----------
-# ------------------------------------------------------------
+## ------------------------------------------------------------
+## -------------------      ASAN-TECH       -------------------
+## ------------------------------------------------------------
+ Repositorio creado para el desarrollo y la implementación 
+ del TFG de Grado Superior de Administración de Sistemas en Red.
+ Tutulo:       ASAN-TECH 
+ Autores:      Asier García y Andrés Sierra
+ 
+## ------------------------------------------------------------
+## ----------    CONCEPTO GENERALES DEL PROYECTO    -----------
+## ------------------------------------------------------------
+
+
 La idea de proyecto es montar una empresa que proporciona servicios y soluciones sencillas 
 en nube a pequeñas empresas que quieren sumarse a las nuevas tecnologías. 
 Se ofrecen servicios de correo privado, Drive, suite Office, facturación y CRM.
@@ -21,10 +27,15 @@ con los datos del usuario pasado por variables y el software que quiere contrata
 
 Además, para no guardar contraseñas vamos a usar un hash para verificar las credenciales de usuarios. 
 Protegiéndonos ante fuga de contraseñas.
+## ------------------------------------------------------------
+## Diagrama de Red 
+![diagrama de red](https://github.com/Assier26/ASAN-TECH/blob/main/general/topologia_packet_tracer.jpeg?raw=true)
+## ------------------------------------------------------------
 
-# ------------------------------------------------------------
-# ----------              TECNOLOGÍAS              -----------
-# ------------------------------------------------------------
+
+## ------------------------------------------------------------
+## ----------              TECNOLOGÍAS              -----------
+## ------------------------------------------------------------
   1. WEB: html5, css, php, sql / apache2, nginx / phpMyAdmin
   2. APP: docker, kubernetes, terraform, ansible
   3. Sistemas: Linux Server 24 / pfsense
@@ -33,9 +44,9 @@ Protegiéndonos ante fuga de contraseñas.
   6. Software a implementar: Nextcloud, FacturaScript, Wordpress, 
 
 
-# ------------------------------------------------------------
-# ----------         TAREAS GENERALES              -----------
-# ------------------------------------------------------------
+## ------------------------------------------------------------
+## ----------         TAREAS GENERALES              -----------
+## ------------------------------------------------------------
   1. Desarrollo Web -->
     a. Pagina Web (Todo el mundo)
       1. Home, contacto, quienes somos, legalidad (politica coohies, politica privacidad), formulario de contratación de servicios, login.
@@ -48,5 +59,15 @@ Protegiéndonos ante fuga de contraseñas.
   3. Documentación del Proyecto
 
 
+## ------------------------------------------------------------
+## ----------         RAMAS DEL PROYECTO              -----------
+## ------------------------------------------------------------
+
+ main -> 
+       - ramaAndres
+       - ramaAsier
 
 
+
+
+**&copy; 202 [Asier García & Andrés Sierra]**
