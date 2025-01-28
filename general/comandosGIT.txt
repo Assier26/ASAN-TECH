@@ -1,0 +1,62 @@
+# --    COMANDOS DE GIT --
+# -- Credenciales
+git config --global user.email andres.sierra.sanchez@outlook.com
+git config --global user.name "AndresSierra-Oficial"
+# Comprobamos los cambios
+git config --list
+
+# --    Inicilalizar un Directorio
+git init
+# --    Añadir un archivo
+git add $archivo.txt
+# Confirmar cambios
+git commit -m "Mensaje de referencia"
+
+# --    Comprobar diferencias entre lo viejo y lo modificado
+git diff
+# Ver estado de actual
+git status
+# Ver el log
+git log
+
+# --    Deshacer los cambios
+git chekout -- $archivo.txt
+#Quitar cambios de la zona de intercambio temporal, pero
+# mantenerlos en el directorio actual
+git reset $archivo.txt
+
+# --    Subir un repositorio nuevo creado en local
+git init
+git add .
+git commit -m "Primer commit"
+
+git remote add origin https://github.com/AndresSierra-Oficial/pruega.git
+git branch -M main
+git push -u origin main
+
+# --    Descargar un Repositorio
+git clone https://github.com/Assier26/ASAN-TECH.git
+
+
+# --    Subir cambios
+git push
+# --    Enviar cambios a la rama remota
+git push origin $nuevaCaracteristica
+git push --set-upstream origin master
+# --    Trae o descarga los cambios de github
+git pull
+# -- Mostrar las ramas
+git branch
+# -- Crear rama nueva
+git branch nuevaRama
+# -- Cambiar de rama
+git checkout nuevaRama
+
+
+# --    Unir varias ramas
+git checkout master
+git merge nuevaRama
+git push origin main
+
+
+
