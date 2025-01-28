@@ -1,0 +1,4 @@
+---
+
+kubernets_domain: 'jruizcampos.com'
+common_packages: ['net-tools', 'wget']
