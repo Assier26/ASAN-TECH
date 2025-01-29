@@ -26,24 +26,24 @@ Protegiéndonos ante fuga de contraseñas.
 
 
 ## TECNOLOGÍAS
-  1. WEB: html5, css, php, sql / apache2, nginx / phpMyAdmin
-  2. APP: docker, kubernetes, terraform, ansible
-  3. Sistemas: Linux Server 24 / pfsense
-  4. Protocolos utilizados:  https, ssh, ftp,
-  5. Otros: python.
-  6. Software a implementar: Nextcloud, FacturaScript, Wordpress, 
+1. WEB: html5, css, php, sql / apache2, nginx / phpMyAdmin
+2. APP: docker, kubernetes, terraform, ansible
+3. Sistemas: Linux Server 24 / pfsense
+4. Protocolos utilizados:  https, ssh, ftp,
+5. Otros: python.
+6. Software a implementar: Nextcloud, FacturaScript, Wordpress, 
 
 ## TAREAS GENERALES
-  1. Desarrollo Web -->
+1. Desarrollo Web -->
     a. Pagina Web (Todo el mundo)
-      1. Home, contacto, quienes somos, legalidad (politica coohies, politica privacidad), formulario de contratación de servicios, login.
+        1. Home, contacto, quienes somos, legalidad (politica coohies, politica privacidad), formulario de contratación de servicios, login.
     b. App Web (Usuarios - login)
-      1. Login -> conexion.php, loging.php, etc...
-  2. Implementación de Arquitectura:
+        1. Login -> conexion.php, loging.php, etc...
+2. Implementación de Arquitectura:
     a. 1º maquina: Firewall - con pfsense (nat, proxy, balancer, firewall)
     b. 2º maquina: Serv. Controler - con Ansible, ¿Servidor Web?, 
     c. 3º maquina: Serv. App - donde se crean los contenedores. 
-  3. Documentación del Proyecto
+3. Documentación del Proyecto
 
 ## RAMAS DEL PROYECTO
 main:

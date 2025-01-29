@@ -1,9 +1,58 @@
+# -----------------------------------------------------------------------
 # --    COMANDOS DE GIT --
+git config --list
+# -----------------------------------------------------------------------
 # -- Credenciales
 git config --global user.email ...
 git config --global user.name "..."
 # Comprobamos los cambios
 git config --list
+# -----------------------------------------------------------------------
+# -- Crear tu rama
+    # -- 1. Actualizar la información de las ramas remotas:
+    git fetch
+    # -- 2. Mostrar las ramas
+    git branch
+    # -- 3. Crear y cambiar a la nueva rama para Asier:
+    git checkout -b ramaAsier
+    # -- 4. Enviar los cambios al repositorio remoto
+    git push origin ramaAsier
+# -----------------------------------------------------------------------
+# -----------------------------------------------------------------------
+# -- Para subir tu rama
+    # -- 1. Verificar la rama
+    git branch
+    # -- 2. verificar el estado del reposirotio
+    git status
+    # -- 3. Agregamos los cambios (Estando en el directorio local de nuestra rama)
+    git add .
+    # -- 4. Confirmamos cambios
+    git commit -m "Descripción de los cambios realizados"
+    # -- 5. Enviar los cambios al repositorio remoto
+    git push origin ramaAndres
+# -----------------------------------------------------------------------
+# -- Para fusionar tu rama con la principal
+    # -- 1. Actualizar las ramas
+    git fetch
+    # -- 2. Crear una rama previa para verificar que se hace bien
+    git checkout main
+    git pull origin main
+    git checkout -b verificacion-fusion
+    # -- 3. Fusionar la rama deseada en la nueva rama de verificación
+    git merge $ramaAFusionar
+    # -- 4. Añadimos los cambios y confirmamos.
+    git add .
+    git commit -m "Mensaje"
+    # -- 5. Verificamos el contenido de los archivos.
+    # -- 6. Fusionar la rama de verificación con main:
+    git checkout origin main
+    git merge origin verificacion-fusion
+    # -- 7. Enviar los cambios al repositorio remoto:
+    git push origin main
+# -----------------------------------------------------------------------
+
+
+
 
 # --    Inicilalizar un Directorio
 git init
@@ -50,47 +99,3 @@ git branch $Rama
 git checkout $Rama
 
 
-
-# -----------------------------------------------------------------------
-# -- Crear tu rama
-    # -- 1. Actualizar la información de las ramas remotas:
-    git fetch
-    # -- 2. Mostrar las ramas
-    git branch
-    # -- 3. Crear y cambiar a la nueva rama para Asier:
-    git checkout -b ramaAsier
-    # -- 4. Enviar los cambios al repositorio remoto
-    git push origin ramaAsier
-# -----------------------------------------------------------------------
-# -----------------------------------------------------------------------
-# -- Para subir tu rama
-    # -- 1. Verificar la rama
-    git branch
-    # -- 2. verificar el estado del reposirotio
-    git status
-    # -- 3. Agregamos los cambios (Estando en el directorio local de nuestra rama)
-    git add .
-    # -- 4. Confirmamos cambios
-    git commit -m "Descripción de los cambios realizados"
-    # -- 5. Enviar los cambios al repositorio remoto
-    git push origin ramaAndres
-# -----------------------------------------------------------------------
-# -- Para fusionar tu rama con la principal
-    # -- 1. Actualizar las ramas
-    git fetch
-    # -- 2. Crear una rama previa para verificar que se hace bien
-    git checkout main
-    git pull origin main
-    git checkout -b verificacion-fusion
-    # -- 3. Fusionar la rama deseada en la nueva rama de verificación
-    git merge $ramaAFusionar
-    # -- 4. Añadimos los cambios y confirmamos.
-    git add .
-    git commit -m "Mensaje"
-    # -- 5. Verificamos el contenido de los archivos.
-    # -- 6. Fusionar la rama de verificación con main:
-    git checkout origin main
-    git merge origin verificacion-fusion
-    # -- 7. Enviar los cambios al repositorio remoto:
-    git push origin main
-# -----------------------------------------------------------------------
