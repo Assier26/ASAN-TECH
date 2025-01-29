@@ -22,7 +22,7 @@ con los datos del usuario pasado por variables y el software que quiere contrata
 Además, para no guardar contraseñas vamos a usar un hash para verificar las credenciales de usuarios. 
 Protegiéndonos ante fuga de contraseñas.
 ## Diagrama de Red 
-![diagrama de red](https://github.com/Assier26/ASAN-TECH/blob/main/general/topologia_packet_tracer.jpeg?raw=true)
+![diagrama de red](https://github.com/Assier26/ASAN-TECH/blob/main/01_general/Topologia/topologia_packet_tracer.jpeg?raw=true)
 
 
 ## TECNOLOGÍAS
