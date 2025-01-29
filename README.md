@@ -8,13 +8,12 @@
 La idea de proyecto es montar una empresa que proporciona servicios y soluciones sencillas 
 en nube a pequeñas empresas que quieren sumarse a las nuevas tecnologías. 
 Se ofrecen servicios de correo privado, Drive, suite Office, facturación y CRM.
+Todo el software será OpenSource.
 
-Para la arquitectura o disposición de los recursos necesarios vamos a contar con servidores alquilados a clou¡ding,
-en los cuales vamos a implementar nuestras tecnologías. La idea es tener una máquina que haga de firewall , 
-por donde irá primero el cliente al introducir nuestra pagina web, de ahí queremos redirigir el tráfico a un servidor web 
-con LAMP y PhpMyadmin, donde tendremos alojago nuestro sitio web y nuestra aplicación web para que nuestros clientes puedan 
-contratar servicios o gestionar lo contratado. Luego, queremos tener otro servidor de aplicaciones en donde 
-desplegaremos las aplicaciones con docker gestionado con kubernetes, terraform y ansible. 
+Para la arquitectura de los recursos necesarios vamos a contar con servidores alquilados a clouding,
+en los cuales vamos a implementar nuestras tecnologías. 
+
+La idea es tener una máquina que haga de firewall , por donde irá primero el cliente al introducir nuestra pagina web, de ahí queremos redirigir el tráfico a un servidor web con LAMP y PhpMyadmin, donde tendremos alojago nuestro sitio web y nuestra aplicación web para que nuestros clientes puedan contratar servicios o gestionar lo contratado. Luego, queremos tener otro servidor de aplicaciones en donde desplegaremos las aplicaciones con docker gestionado con kubernetes, terraform y ansible. 
 
 Queremos que según el cliente rellene un formulario para contratarnos un servicio, se le cree o levante un contenedor 
 con los datos del usuario pasado por variables y el software que quiere contratar. Todo automatizado a través de script y variables.
