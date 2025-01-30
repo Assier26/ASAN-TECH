@@ -1,5 +1,8 @@
 #!/bin/bash
-
+#
+# Este script tiene la función de instalar el contendor de Nextcloud en Docker
+# 
+#
 # Actualizar los paquetes del sistema
 echo "Actualizando los paquetes del sistema..."
 sudo apt update -y
