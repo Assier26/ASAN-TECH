@@ -10,7 +10,7 @@ sudo apt update && sudo apt upgrade -y
 
 # Instalar paquetes requeridos
 echo "📦 Instalando paquetes necesarios..."
-sudo apt install -y ca-certificates curl gnupg lsb-release apt-transport-https
+sudo apt install -y ca-certificates curl gnupg lsb-release apt-transport-https software-properties-common
 
 # Instalar Docker
 echo "🐳 Instalando Docker..."
@@ -66,6 +66,6 @@ sudo sysctl --system
 # Deshabilitar swap (requerido por Kubernetes)
 echo "🛑 Deshabilitando swap..."
 sudo swapoff -a
-sudo sed -i '/ swap / s/^/#/' /etc/fstab
+sudo sed -i '/swap/ s/^/#/' /etc/fstab
 
 echo "🎉 Instalación completa. Docker y Kubernetes están listos para usarse."

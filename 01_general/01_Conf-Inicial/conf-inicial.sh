@@ -5,6 +5,7 @@
 apt update && apt upgrade -y
 # Instalación de paquetes necesarios
 
+apt install openssh-server -y
 
 
 
