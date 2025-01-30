@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nextcloud
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nextcloud
+  template:
+    metadata:
+      labels:
+        app: nextcloud
+    spec:
+      containers:
+        - name: nextcloud
+          image: nextcloud:latest
+          ports:
+            - containerPort: 80
+          env:
+            - name: NEXTCLOUD_ADMIN_USER
+              value: "admin"
+            - name: NEXTCLOUD_ADMIN_PASSWORD
+              value: "adminpassword"
+            - name: NEXTCLOUD_TRUSTED_DOMAINS
+              value: "nextcloud.local"
+            - name: MYSQL_HOST
+              value: "mariadb"
+            - name: MYSQL_DATABASE
+              value: "nextcloud"
+            - name: MYSQL_USER
+              value: "nextcloud"
+            - name: MYSQL_PASSWORD
+              value: "nextcloudpassword"
+          volumeMounts:
+            - mountPath: "/var/www/html"
+              name: nextcloud-storage
+      volumes:
+        - name: nextcloud-storage
+          persistentVolumeClaim:
+            claimName: nextcloud-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nextcloud
+spec:
+  selector:
+    app: nextcloud
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: ClusterIP

@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: facturascript
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: facturascript
+  template:
+    metadata:
+      labels:
+        app: facturascript
+    spec:
+      containers:
+        - name: facturascript
+          image: facturascript/facturascript
+          ports:
+            - containerPort: 80
+          env:
+            - name: FS_DB_HOST
+              value: "mariadb"
+            - name: FS_DB_USER
+              value: "facturascript"
+            - name: FS_DB_PASS
+              value: "facturascriptpassword"
+            - name: FS_DB_NAME
+              value: "facturascript"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: facturascript
+spec:
+  selector:
+    app: facturascript
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: ClusterIP
