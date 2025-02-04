@@ -1,5 +1,5 @@
 #!/bin/bash
-#
+#f
 # Este script tiene el objetivo de lanzarse y configurar 
 #  e instalar automáticamente Kubernetes.
 #
