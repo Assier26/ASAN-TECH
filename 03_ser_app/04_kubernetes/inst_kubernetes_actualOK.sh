@@ -110,7 +110,8 @@ sudo systemctl status  containerd
 # ----------------------------------------------------------------------------
 # --- Hasta aqui se instala tanto en el nodo master como en el nodo worker ---
 # ----------------------------------------------------------------------------
-# ---  NODO MASTER  ---
+# ----------------------------------------------------------------------------
+#                           ---  NODO MASTER  ---
 # 5. Descargar imagenes de kubernetes
 sudo kubeadm config images pull
 
