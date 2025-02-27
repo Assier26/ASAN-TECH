@@ -4,11 +4,11 @@ apt update && apt upgrade -y
 # --	Instalación Vbox	--
 #Instalar dependencias Vbox
 apt install build-essential dkms linux-headers-$(uname -r)
-#Insertamos el cd en la maquina virtual
+#Insertamos el cd en la maquina virtual de GuestAdditions
 # Montamos el cd en /mnt
 mount /dev/cdrom /mnt
 # Ejecutamos el programa
-mnt/VBoxLinuxAdditions.run
+/mnt/VBoxLinuxAdditions.run
 
 # --	Carpeta Compartida (carp_comp)	--
 # Crear el directorio compartido
