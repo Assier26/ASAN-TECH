@@ -49,4 +49,4 @@ main:
 - ramaAndres
 - ramaAsier
 
-**&copy; 202 [Asier García & Andrés Sierra]**
+**&copy; 2025 [Asier García & Andrés Sierra]**
