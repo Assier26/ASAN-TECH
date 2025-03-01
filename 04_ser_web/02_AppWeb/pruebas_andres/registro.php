@@ -2,6 +2,30 @@
 session_start();
 include('conexion.php');
 
+/* - INYECCIÓN SQL
+// Conectar a la BBDD
+$sql = "INSERT INTO comentario(parent_comentario_id,comment,comment_sender_name,date) VALUES ( 11, 'es un comentario', 'maria','" . $date . "')";
+
+// Seguridad para evitar inyecciones SQL
+$sqlSeguro = $mysqli->real_escape_string($sql);
+
+    // Ejecutar la consulta
+    if ($mysqli->query($sqlSeguro) === TRUE) {
+        echo "Registro insertado correctamente.";
+    } else {
+        echo "Error al insertar el registro: " . $mysqli->error;
+    }
+
+
+*/
+
+
+
+
+
+
+
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $nombre_usuario = trim($_POST['nombre']);
     $contrasena = trim($_POST['contrasena']);
