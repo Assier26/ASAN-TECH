@@ -1,69 +1,23 @@
 ---
-- hosts: all
-  become: yes
-  roles:
-    - common
+# Playbook principal para desplegar el proyecto
 
-- hosts: master
-  become: yes
-  roles:
-    - docker
-    - kubernetes-master
+# 1. Configuraciones comunes a todos los nodos
+- import_playbook: 01-configuraciones-comunes.yml
 
-- hosts: workers
-  become: yes
-  roles:
-    - docker
-    - kubernetes-worker
+# 2. Instalar Docker en todos los nodos
+- import_playbook: 02-instalar-docker.yml
 
-- hosts: master
-  become: yes
-  tasks:
-    - name: Inicializar el clúster de Kubernetes
-      command: kubeadm init --pod-network-cidr=10.244.0.0/16
+# 3. Instalar Kubernetes en todos los nodos
+- import_playbook: 03-instalar-kubernetes.yml
 
-    - name: Configurar kubeconfig para el usuario asan
-      command: "{{ item }}"
-      with_items:
-        - mkdir -p /home/asan/.kube
-        - cp -i /etc/kubernetes/admin.conf /home/asan/.kube/config
-        - chown asan:asan /home/asan/.kube/config
+# 4. Configurar el nodo Master de Kubernetes
+- import_playbook: 04-configurar-master.yml
 
-    - name: Instalar Flannel (red para Kubernetes)
-      command: kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+# 5. Configurar los nodos Workers de Kubernetes
+- import_playbook: 05-configurar-workers.yml
 
-    - name: Obtener el comando para unir workers
-      command: kubeadm token create --print-join-command
-      register: join_command
+# 6. Desplegar la aplicación (MySQL y página web) en Kubernetes
+- import_playbook: 06-desplegar-aplicacion.yml
 
-    - name: Guardar el comando de unión
-      copy:
-        content: "{{ join_command.stdout }}"
-        dest: /home/asan/join-command.sh
-        mode: '0755'
-
-- hosts: workers
-  become: yes
-  tasks:
-    - name: Unirse al clúster de Kubernetes
-      command: /home/asan/join-command.sh
-      when: inventory_hostname in groups['workers']
-
-- hosts: master
-  become: yes
-  tasks:
-    - name: Desplegar MySQL y la página web en Kubernetes
-      command: kubectl apply -f /kubernetes/{{ item }}
-      with_items:
-        - mysql-secret.yaml
-        - mysql-deployment.yaml
-        - mysql-service.yaml
-        - web-configmap.yaml
-        - web-deployment.yaml
-        - web-service.yaml
-
-    - name: Verificar recursos desplegados
-      command: kubectl get all
-      register: kubectl_output
-    - debug:
-        var: kubectl_output.stdout
+# 7. Verificar el clúster y los servicios desplegados
+- import_playbook: 07-verificar-cluster.yml

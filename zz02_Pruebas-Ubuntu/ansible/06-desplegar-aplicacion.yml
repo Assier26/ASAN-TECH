@@ -1,0 +1,13 @@
+---
+- hosts: master
+  become: yes
+  tasks:
+    - name: Desplegar MySQL y la página web en Kubernetes
+      command: kubectl apply -f ../../kubernetes/{{ item }}
+      with_items:
+        - mysql-secret.yaml
+        - mysql-deployment.yaml
+        - mysql-service.yaml
+        - web-configmap.yaml
+        - web-deployment.yaml
+        - web-service.yaml
