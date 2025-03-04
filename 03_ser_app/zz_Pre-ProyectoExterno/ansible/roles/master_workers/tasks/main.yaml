@@ -79,7 +79,7 @@
   become: yes
 
 - name: Instalamos Docker
-  dnf:
+  apt:
     name: "{{ docker_packages }}"
     state: present
   become: yes
@@ -118,7 +118,7 @@
   become: yes
 
 - name: Instalamos Kubernetes
-  dnf:
+  apt:
     name: "{{ kubernetes_packages }}"
     state: present
     disable_excludes: Kubernetes

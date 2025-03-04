@@ -18,27 +18,27 @@
   become: yes
 
 - name: Actualizando los paquetes del Sistema
-  dnf:
-    name: "*"
-    state: latest
+  apt:
+    update_cache: yes
+    upgrade: dist
   become: yes
   
 - name: Instalamos paquetes de Utilidades
-  dnf:
+  apt:
     name: "{{ common_packages }}"
     state: present
   become: yes
 
-- name: Deshabilitamos SELinux
-  selinux:
-    state: disabled
-  become: yes
+# - name: Deshabilitamos SELinux
+#   selinux:
+#     state: disabled
+#   become: yes
 
-- name: Instalando Chrony (Red Hat/Centos)
-  dnf:
-    name: chrony
-    state: present
-  become: yes
+# - name: Instalando Chrony (Red Hat/Centos)
+#   apt:
+#     name: chrony
+#     state: present
+#   become: yes
 
 # Yo soy de Lima/Perú ;)
 - name: Configurando el timezone a America/Lima
@@ -46,10 +46,10 @@
     name: America/Lima
   become: yes
   
-- name: Habilitar servicio Chronyd (Red Hat)
-  systemd:
-    name: chronyd
-    state: started
-    enabled: yes
-    masked: no
-  become: yes
+# - name: Habilitar servicio Chronyd (Red Hat)
+#   systemd:
+#     name: chronyd
+#     state: started
+#     enabled: yes
+#     masked: no
+#   become: yes

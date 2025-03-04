@@ -1,6 +1,6 @@
 
 - name: Instalamos paquetes de NFS
-  dnf:
+  apt:
     name: "{{ nfs_packages }}"
     state: present
   become: yes
