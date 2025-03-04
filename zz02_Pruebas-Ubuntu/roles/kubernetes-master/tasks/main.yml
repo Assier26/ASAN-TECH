@@ -1,0 +1,30 @@
+- name: Add Kubernetes GPG key
+  apt_key:
+    url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+    state: present
+
+- name: Add Kubernetes repository
+  apt_repository:
+    repo: deb https://apt.kubernetes.io/ kubernetes-xenial main
+    state: present
+
+- name: Install Kubernetes components
+  apt:
+    name:
+      - kubelet
+      - kubeadm
+      - kubectl
+    state: present
+
+- name: Initialize Kubernetes cluster
+  command: kubeadm init --pod-network-cidr=10.244.0.0/16
+
+- name: Set up kubeconfig for ubuntu user
+  command: "{{ item }}"
+  with_items:
+    - mkdir -p /home/ubuntu/.kube
+    - cp -i /etc/kubernetes/admin.conf /home/ubuntu/.kube/config
+    - chown ubuntu:ubuntu /home/ubuntu/.kube/config
+
+- name: Install Flannel network plugin
+  command: kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml

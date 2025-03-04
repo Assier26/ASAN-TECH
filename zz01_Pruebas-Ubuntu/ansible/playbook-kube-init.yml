@@ -1,0 +1,33 @@
+---
+- hosts: master
+  become: yes
+  tasks:
+    - name: Inicializar el clúster de Kubernetes
+      command: kubeadm init --pod-network-cidr=10.244.0.0/16
+
+    - name: Configurar kubeconfig para el usuario ansible-user
+      command: "{{ item }}"
+      with_items:
+        - mkdir -p /home/ansible-user/.kube
+        - cp -i /etc/kubernetes/admin.conf /home/ansible-user/.kube/config
+        - chown ansible-user:ansible-user /home/ansible-user/.kube/config
+
+    - name: Instalar Flannel (red para Kubernetes)
+      command: kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+
+    - name: Obtener el comando para unir workers
+      command: kubeadm token create --print-join-command
+      register: join_command
+
+    - name: Guardar el comando de unión
+      copy:
+        content: "{{ join_command.stdout }}"
+        dest: /home/ansible-user/join-command.sh
+        mode: '0755'
+
+- hosts: workers
+  become: yes
+  tasks:
+    - name: Unirse al clúster de Kubernetes
+      command: /home/ansible-user/join-command.sh
+      when: inventory_hostname in groups['workers']

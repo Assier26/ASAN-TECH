@@ -1,0 +1,33 @@
+---
+- hosts: master
+  become: yes
+  tasks:
+    - name: Aplicar ConfigMap
+      command: kubectl apply -f /ruta/al/proyecto/kubernetes/web-configmap.yaml
+
+    - name: Verificar ConfigMap
+      command: kubectl get configmap web-files -o yaml
+      register: configmap_output
+    - debug:
+        var: configmap_output.stdout
+
+    - name: Aplicar MySQL Secret
+      command: kubectl apply -f /ruta/al/proyecto/kubernetes/mysql-secret.yaml
+
+    - name: Aplicar MySQL Deployment
+      command: kubectl apply -f /ruta/al/proyecto/kubernetes/mysql-deployment.yaml
+
+    - name: Aplicar MySQL Service
+      command: kubectl apply -f /ruta/al/proyecto/kubernetes/mysql-service.yaml
+
+    - name: Aplicar Web Deployment
+      command: kubectl apply -f /ruta/al/proyecto/kubernetes/web-deployment.yaml
+
+    - name: Aplicar Web Service
+      command: kubectl apply -f /ruta/al/proyecto/kubernetes/web-service.yaml
+
+    - name: Verificar recursos desplegados
+      command: kubectl get all
+      register: kubectl_output
+    - debug:
+        var: kubectl_output.stdout
