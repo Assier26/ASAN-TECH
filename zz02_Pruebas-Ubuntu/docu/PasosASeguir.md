@@ -100,10 +100,12 @@ ansible all -i ansible/inventory -m ping
     ------------------------------------------------------------------
 3. Configurar DNS
     -- Configurar hostname en cada nodo.
+        sudo hostnamectl set-hostname ansible
         sudo hostnamectl set-hostname master
         sudo hostnamectl set-hostname worker1
         sudo hostnamectl set-hostname worker2
-    -- Configurar /etc/host en cada nodo, ejemplo del nodo Ansible.
+    -- Configurar /etc/hosts en cada nodo, ejemplo del nodo Ansible.
+        192.168.1.11 ansible
         192.168.1.12 master
         192.168.1.13 worker1
         192.168.1.14 worker2
@@ -141,8 +143,8 @@ ansible all -i ansible/inventory -m ping
     - verificar que se han creado:
             ls ~/.ssh/
     - Pasar la clave a los hosts.
-        ssh-copy-id -i ~/.ssh/id_rsa.pub adminUsername@192.168.1.12
-        ssh-copy-id -i ~/.ssh/id_rsa.pub adminUsername@192.168.1.13
+        ssh-copy-id -i ~/.ssh/id_rsa.pub asan@192.168.1.12
+        ssh-copy-id -i ~/.ssh/id_rsa.pub asan@192.168.1.13
     - Revisar que se han pasado las claves:
         ssh asan@192.168.1.12
         cat ~/.ssh/authorized_keys
