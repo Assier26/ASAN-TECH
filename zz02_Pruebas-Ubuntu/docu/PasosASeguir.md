@@ -169,7 +169,7 @@ entonces usaremos ese usuario para todo.
 
 
 
-        
+
     ----------------------
     - Otra Opción: Ejecutar el script "setup-ssh-keys.sh".
         - chmod +x setup-ssh-keys.sh
@@ -191,16 +191,16 @@ entonces usaremos ese usuario para todo.
 
 
 Fallos
-1. En caso de fallo de ...:
-    1. "corregido " - En repositorios de kubernetes
+En caso de fallo de ...:
+1. "corregido " - En repositorios de kubernetes
         - lista de repositorios
             ls /etc/apt/sources.list.d/
         - eliminarlo
             sudo rm /etc/apt/sources.list.d/kubernetes.list
 
-    2. "corregido " - * Los servidores tienen que tener 2 cpu si no no funciona.
+2. "corregido " - * Los servidores tienen que tener 2 cpu si no no funciona.
 
-    3. "corregido " - playbook de kubernetes, añade mal la variable de netorno de 
+3. "corregido " - playbook de kubernetes, añade mal la variable de netorno de 
         - name: Update Kubeadm Environment Variable
         blockinfile:
             path: /usr/lib/systemd/system/kubelet.service.d/10-kubeadm.conf
@@ -209,7 +209,7 @@ Fallos
             Environment="KUBELET_EXTRA_ARGS=--fail-swap-on=false"
             marker: "# {mark} ANSIBLE MANAGED BLOCK"
 
-    4. Fallo en 
+4. Fallo en 
         - name: Initialize Kubernetes control plane
         command: kubeadm init --pod-network-cidr=10.244.0.0/16
         args:
@@ -217,12 +217,196 @@ Fallos
         become: true
         register: kubeadm_init_output
 
-    5. Fallo en el worker con container.io.
+5. Fallo en el worker con container.io.
 
-    6. Fallo al conectar al cluster de kubernetes
+6. Fallo al conectar al cluster de kubernetes
 
         - He creado claves ssh en worker y master y se las he pasado al contrario
         - Verificar la Resolución DNS
         - Verificar la Conexión SSH Manualmente
    
-    - 7. 
+7. Error con comando join
+
+    TASK [kubernetes-worker : Read Join Command from Master] 
+    fatal: [worker1 -> master1]: FAILED! => {"changed": false, "msg": "file not found: /tmp/join-command"}
+
+
+    El error indica que el archivo /tmp/join-command no se encuentra en master1. Esto sucede porque el playbook de master1 no ha generado correctamente el archivo join-command antes de que el playbook de worker1 intente leerlo
+
+    Verifica que el archivo /tmp/join-command existe en master1:
+    ssh asan@master1 "ls -l /tmp/join-command"
+
+
+    Si el archivo no existe, ejecuta manualmente el comando para generarlo
+    ssh asan@master1 "kubeadm token create --print-join-command > /tmp/join-command"
+
+
+    Verifica que el archivo /tmp/join-command tenga permisos de lectura para el usuario asan
+    ssh asan@master1 "chmod 644 /tmp/join-command"
+
+
+
+
+8. Corregido -> No actualiza master1 ni descarga paquetes
+    - Problema, mala configuracion en el archivo netplan.
+
+network:
+    ethernets:
+        enp0s3:
+            addresses:
+            - 10.0.2.15/24
+            nameservers:
+                addresses:
+                - 8.8.8.8
+                search: 
+                - 8.8.8.8
+            routes:
+            -   to: default
+                via: 10.0.2.2
+        enp0s8:
+            addresses:
+            - 192.168.1.13/24
+            nameservers:
+                addresses:
+                - 8.8.8.8
+                search: 
+                - 8.8.8.8
+    version: 2
+
+
+
+
+    - sudo netplan try
+    - sudo netplan apply
+    - sudo apt update
+
+
+9. Corregido.
+
+- name: Initialize Kubernetes control plane
+  command: kubeadm init --pod-network-cidr=10.244.0.0/16
+  args:
+    creates: /etc/kubernetes/admin.conf
+  become: true
+  register: kubeadm_init_output
+
+En el master:
+
+  sudo kubeadm config images pull --kubernetes-version v1.30.10
+
+
+sudo ctr -n k8s.io images pull registry.k8s.io/pause:3.9
+sudo ctr -n k8s.io images tag registry.k8s.io/pause:3.9 registry.k8s.io/pause:3.8
+
+
+10. 
+TASK [kubernetes-master : Generate the Join Command] ***********************************************************************************************************************************
+fatal: [master1]: FAILED! => {"changed": true, "cmd": "kubeadm token create --print-join-command > /tmp/join-command", "delta": "0:01:00.136373", "end": "2025-03-06 11:53:42.633641", "msg": "non-zero return code", "rc": 1, "start": "2025-03-06 11:52:42.497268", "stderr": "failed to create or update bootstrap token with name bootstrap-token-ifxovc: unable to create Secret: Post \"https://10.0.2.15:6443/api/v1/namespaces/kube-system/secrets?timeout=10s\": dial tcp 10.0.2.15:6443: connect: connection refused\nTo see the stack trace of this error execute with --v=5 or higher", "stderr_lines": ["failed to create or update bootstrap token with name bootstrap-token-ifxovc: unable to create Secret: Post \"https://10.0.2.15:6443/api/v1/namespaces/kube-system/secrets?timeout=10s\": dial tcp 10.0.2.15:6443: connect: connection refused", "To see the stack trace of this error execute with --v=5 or higher"], "stdout": "", "stdout_lines": []}
+
+
+
+
+El error que estás viendo indica que el comando kubeadm token create no pudo conectarse al API server de Kubernetes (https://10.0.2.15:6443). Esto sucede porque el API server no está disponible o no está escuchando en esa dirección y puerto.
+
+
+- name: Store Kubernetes initialization output to file
+  copy:
+    content: "{{ kubeadm_init_output.stdout }}"
+    dest: /tmp/kubeadm_output
+  delegate_to: master1
+
+lo he cambiado de "localhost" a "master"
+
+
+- name: Initialize Kubernetes control plane
+  command: kubeadm init --pod-network-cidr=10.244.0.0/16
+  args:
+    creates: /etc/kubernetes/admin.conf
+  become: true
+  register: kubeadm_init_output
+
+
+
+
+- name: Initialize Kubernetes control plane
+  command: kubeadm init --pod-network-cidr=10.244.0.0/16 --apiserver-advertise-address=192.168.1.12
+  args:
+    creates: /etc/kubernetes/admin.conf
+  become: true
+  register: kubeadm_init_output
+
+
+
+
+TASK [kubernetes-master : Generate the Join Command] ***********************************************************************************************************************************
+fatal: [master1]: FAILED! => {"changed": true, "cmd": "kubeadm token create --print-join-command > /tmp/join-command", "delta": "0:01:00.038618", "end": "2025-03-06 12:03:01.500167", "msg": "non-zero return code", "rc": 1, "start": "2025-03-06 12:02:01.461549", "stderr": "failed to create or update bootstrap token with name bootstrap-token-4e2s0q: unable to create Secret: Post \"https://10.0.2.15:6443/api/v1/namespaces/kube-system/secrets?timeout=10s\": dial tcp 10.0.2.15:6443: connect: connection refused\nTo see the stack trace of this error execute with --v=5 or higher", "stderr_lines": ["failed to create or update bootstrap token with name bootstrap-token-4e2s0q: unable to create Secret: Post \"https://10.0.2.15:6443/api/v1/namespaces/kube-system/secrets?timeout=10s\": dial tcp 10.0.2.15:6443: connect: connection refused", "To see the stack trace of this error execute with --v=5 or higher"], "stdout": "", "stdout_lines": []}
+
+PLAY RECAP 
+
+
+
+Verificar la configuración del API server
+
+cat /etc/kubernetes/manifests/kube-apiserver.yaml
+
+
+- --advertise-address=192.168.1.12
+
+sudo systemctl restart kubelet
+
+
+
+Verificar el archivo kubeconfig
+sudo cat /etc/kubernetes/admin.conf
+server: https://192.168.1.12:6443
+
+
+
+
+sudo systemctl status kubelet
+sudo cat /etc/containerd/config.toml
+
+sudo kubeadm config images pull --kubernetes-version v1.30.10
+sudo ctr -n k8s.io images pull registry.k8s.io/pause:3.9
+sudo ctr -n k8s.io images tag registry.k8s.io/pause:3.9 registry.k8s.io/pause:3.8
+
+
+sudo kubeadm init --pod-network-cidr=10.244.0.0/16 --apiserver-advertise-address=192.168.1.12
+
+
+
+
+
+sudo cat /etc/kubernetes/manifests/kube-apiserver.yaml
+sudo cat /etc/kubernetes/manifests/kube-controller-manager.yaml
+sudo cat /etc/kubernetes/manifests/kube-scheduler.yaml
+sudo cat /etc/kubernetes/manifests/etcd.yaml
+
+
+sudo cat /etc/netplan/
+sudo vim /etc/netplan
+
+
+sOLUCIONADO
+
+- name: Wait for API server to be available
+  uri:
+    url: https://192.168.1.12:6443/healthz
+    validate_certs: no
+    status_code: 200
+  register: api_server_status
+  until: api_server_status.status == 200
+  retries: 5
+  delay: 10
+  ignore_errors: yes
+  
+
+TASK [kubernetes-master : Wait for API server to be available] *************************************************************************************************************************
+FAILED - RETRYING: [master1]: Wait for API server to be available (30 retries left).
+FAILED - RETRYING: [master1]: Wait for API server to be available (1 retries left).
+fatal: [master1]: FAILED! => {"attempts": 30, "changed": false, "elapsed": 0, "msg": "Status code was -1 and not [200]: Request failed: <urlopen error [Errno 111] Connection refused>", "redirected": false, "status": -1, "url": "https://192.168.1.12:6443/healthz"}
+...ignoring
+
+TASK [kubernetes-master : Fail if API server is not available after retries] ***********************************************************************************************************
+fatal: [master1]: FAILED! => {"changed": false, "msg": "El API server no está disponible después de 5 minutos. Verifica el estado del clúster."}
+

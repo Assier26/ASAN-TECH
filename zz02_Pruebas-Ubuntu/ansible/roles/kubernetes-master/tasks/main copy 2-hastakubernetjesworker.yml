@@ -88,7 +88,10 @@
     - 2379  # etcd client requests
     - 2380  # etcd peer communication
     - 22    # SSH
+    - 8080  # Optional: Kubernetes API insecure port
     - 10250 # Kubelet API
+    - 10251 # Scheduler
+    - 10252 # Controller Manager
     - 10255 # Read-only Kubelet API
     - 5473  # Calico networking
 
@@ -140,18 +143,112 @@
     name: kubelet
     state: restarted
 
+- name: Update System-Wide Profile for Kubernetes
+  copy:
+    dest: /etc/profile.d/kubernetes.sh
+    content: |
+      export KUBECONFIG=/etc/kubernetes/admin.conf
+      export ANSIBLE_USER="asan"
 
+- name: Reboot the system
+  reboot:
+    msg: "Reboot initiated by Ansible for Kubernetes setup"
+    reboot_timeout: 150
 
+- name: Replace Docker daemon.json configuration
+  copy:
+    dest: /etc/docker/daemon.json
+    content: |
+      {
+        "exec-opts": ["native.cgroupdriver=systemd"],
+        "log-driver": "json-file",
+        "log-opts": {
+          "max-size": "100m"
+        },
+        "storage-driver": "overlay2"
+      }
 
-- name: Read Join Command from Master
-  slurp:
-    path: /tmp/join-command
-  register: join_command
-  delegate_to: master1
+- name: Reload systemd configuration
+  command: systemctl daemon-reload
 
+- name: Restart Docker service
+  service:
+    name: docker
+    state: restarted
 
+- name: Update Kubeadm Environment Variable
+  blockinfile:
+    path: /usr/lib/systemd/system/kubelet.service.d/10-kubeadm.conf
+    block: |
+      [Service]
+      Environment="KUBELET_EXTRA_ARGS=--fail-swap-on=false"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK"
 
+- name: Fix kubelet systemd configuration
+  copy:
+    dest: /usr/lib/systemd/system/kubelet.service.d/10-kubeadm.conf
+    content: |
+      [Service]
+      Environment="KUBELET_EXTRA_ARGS=--fail-swap-on=false"
+  notify:
+    - Reload systemd
+    - Restart kubelet
 
-- name: Join Kubernetes cluster
-  command: "{{ join_command.content | b64decode }}"
+- name: Reload systemd configuration
+  command: systemctl daemon-reload
+
+- name: Restart kubelet service
+  service:
+    name: kubelet
+    state: restarted
+
+- name: Pull kubeadm container images
+  command: kubeadm config images pull --kubernetes-version v1.30.10
   become: true
+
+- name: Verify CPU count
+  fail:
+    msg: "Kubernetes requires at least 2 CPUs. Current CPUs: {{ ansible_processor_vcpus }}"
+  when: ansible_processor_vcpus < 2
+
+- name: Stop kubelet service to free port 10250
+  service:
+    name: kubelet
+    state: stopped
+  ignore_errors: yes
+
+- name: Initialize Kubernetes control plane
+  command: kubeadm init --pod-network-cidr=10.244.0.0/16
+  args:
+    creates: /etc/kubernetes/admin.conf
+  become: true
+  register: kubeadm_init_output
+
+- name: Enable kubelet service
+  service:
+    name: kubelet
+    enabled: yes
+    state: started
+
+- name: Set permissions for Kubernetes Admin
+  file:
+    path: /etc/kubernetes/admin.conf
+    state: file
+    mode: '0644'
+
+- name: Store Kubernetes initialization output to file
+  copy:
+    content: "{{ kubeadm_init_output.stdout }}"
+    dest: /tmp/kubeadm_output
+  delegate_to: localhost
+
+- name: Generate the Join Command
+  shell: kubeadm token create --print-join-command > /tmp/join-command
+  become: true
+
+- name: Set permissions for the Join Executable
+  file:
+    path: /tmp/join-command
+    state: file
+    mode: '0755'
+  delegate_to: localhost

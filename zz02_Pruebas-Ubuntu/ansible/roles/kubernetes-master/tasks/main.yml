@@ -217,12 +217,42 @@
     state: stopped
   ignore_errors: yes
 
+
+
+
+
+
+
+
+
+
+
+
 - name: Initialize Kubernetes control plane
-  command: kubeadm init --pod-network-cidr=10.244.0.0/16
+  command: kubeadm init --pod-network-cidr=10.244.0.0/16 --apiserver-advertise-address=192.168.1.12
   args:
     creates: /etc/kubernetes/admin.conf
   become: true
   register: kubeadm_init_output
+
+
+
+
+- name: Fix kube-apiserver.yaml to use the correct IP
+  replace:
+    path: /etc/kubernetes/manifests/kube-apiserver.yaml
+    regexp: 'host: 10.0.2.15'
+    replace: 'host: 192.168.1.12'
+  become: true
+  notify: Restart kubelet
+
+
+
+
+
+
+
+
 
 - name: Enable kubelet service
   service:
@@ -234,7 +264,10 @@
   file:
     path: /etc/kubernetes/admin.conf
     state: file
-    mode: '0644'
+    mode: '0755'
+
+
+
 
 - name: Store Kubernetes initialization output to file
   copy:
@@ -242,9 +275,52 @@
     dest: /tmp/kubeadm_output
   delegate_to: localhost
 
+
+
+
+- name: Wait for API server to be available
+  uri:
+    url: https://192.168.1.12:6443/healthz
+    validate_certs: no
+    status_code: 200
+  register: api_server_status
+  until: api_server_status.status == 200
+  retries: 5
+  delay: 10
+  ignore_errors: yes
+  
+
+- name: Fail if API server is not available after retries
+  fail:
+    msg: "El API server no está disponible después de 5 minutos. Verifica el estado del clúster."
+  when: api_server_status.status != 200
+
+
+
+
+
 - name: Generate the Join Command
   shell: kubeadm token create --print-join-command > /tmp/join-command
   become: true
+
+
+
+
+
+- name: Wait for /tmp/join-command to be created
+  stat:
+    path: /tmp/join-command
+  register: join_command_stat
+  until: join_command_stat.stat.exists
+  retries: 5  # Número máximo de intentos
+  delay: 10    # Tiempo de espera entre intentos (en segundos)
+  ignore_errors: yes  # Ignorar errores para permitir reintentos
+
+- name: Fail if /tmp/join-command is not created after retries
+  fail:
+    msg: "El archivo /tmp/join-command no se ha creado después de 5 minutos. Verifica el estado del clúster."
+  when: not join_command_stat.stat.exists
+
 
 - name: Set permissions for the Join Executable
   file:
