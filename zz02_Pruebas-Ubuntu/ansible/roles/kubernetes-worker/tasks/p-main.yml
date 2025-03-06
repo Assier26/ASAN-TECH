@@ -17,4 +17,4 @@
     state: present
 
 - name: Join Kubernetes cluster
-  command: kubeadm join <MASTER_IP>:6443 --token <TOKEN> --discovery-token-ca-cert-hash sha256:<HASH>
+  command: kubeadm join 192.168.1.12:6443 --token <TOKEN> --discovery-token-ca-cert-hash sha256:<HASH>

@@ -1,5 +1,7 @@
 -----------------------------------------------------
     --- Pasos a seguir para desplegar el Proyecto de Ansible ASAN-TECH  --
+    *** Este proyecto está realizado para que el host master de kubernetes 
+    aloje la página web y la base de datos.
 -----------------------------------------------------
     --- Estructura del Proyecto ---
 -----------------------------------------------------
@@ -50,9 +52,9 @@
     --- Despliegue de Servicios ---
 Orden de Pasos de ejecución:
     ----------------------
-1. Tareas de preconfiguración.
+1. Tareas de Configuración Previa. (ÇMás abajo)
     ----------------------
-2. Ejecutar el playbook de despliqgue
+2. Ejecutar el playbook de despliegue desde /mnt/carp_com/ASAN_TECH/..
     chmod +x deploy.sh
     ./deploy.sh
     ----------------------
@@ -62,8 +64,13 @@ ansible all -i ansible/inventory -m ping
 4. Integración con la Página Web
     Una vez que todo esté configurado, puedes usar el playbook playbook-deploy.yml 
     para desplegar servicios desde la página web.
+
+5. Acceder a la página web:
+        Usa la IP del nodo de Kubernetes y el puerto 30000 para acceder a la página web.
 ----------------------------------------------------------------------------------------------
     --- 1. Configuración Previa ---
+*** En un paso posterior crearemos el usuario asan, a partir de 
+entonces usaremos ese usuario para todo.
     ------------------------------------------------------------------
 1. Maquinas virtuales
     - Ansible: 1
@@ -77,23 +84,23 @@ ansible all -i ansible/inventory -m ping
     ip:  10.0.2.15
     Gw:  10.0.2.2
     DNS: 8.8.8.8
-- UbServDesk-Servidor1 -> Ansible
+- UbServDesk-Servidor1 -> hostname: ansible
     user: Servidor1
     pass: C@ntrasena
     ip: 192.168.1.11
-- UbServ-Servidor2 -> Master
+- UbServ-Servidor2 -> hostname: master1
     user: Servidor2
     pass: C@ntrasena
     ip: 192.168.1.12
-- UbServ-Servidor3 -> Worker1
+- UbServ-Servidor3 -> hostname: worker1
     user: Servidor3
     pass: C@ntrasena
     ip: 192.168.1.13
-- UbServ-Servidor4 -> Worker2
+- UbServ-Servidor4 -> hostname: worker2
     user: Servidor4
     pass: C@ntrasena
     ip: 192.168.1.14
-- UbDeskt-Cliente1 -> Cliente para controlar por ssh los servers.
+- UbDeskt-Cliente1 ->  hostname: cliente1; para controlar por ssh los servers.
     user: Cliente1
     pass: C@ntrasena
     ip: 192.168.1.21
@@ -101,12 +108,12 @@ ansible all -i ansible/inventory -m ping
 3. Configurar DNS
     -- Configurar hostname en cada nodo.
         sudo hostnamectl set-hostname ansible
-        sudo hostnamectl set-hostname master
+        sudo hostnamectl set-hostname master1
         sudo hostnamectl set-hostname worker1
         sudo hostnamectl set-hostname worker2
     -- Configurar /etc/hosts en cada nodo, ejemplo del nodo Ansible.
         192.168.1.11 ansible
-        192.168.1.12 master
+        192.168.1.12 master1
         192.168.1.13 worker1
         192.168.1.14 worker2
     ------------------------------------------------------------------
@@ -117,7 +124,8 @@ ansible all -i ansible/inventory -m ping
 -- Hacer que el usuario escale privilegios. Ejecutar "visudo" y añadir al final.
     asan    ALL=(ALL)       NOPASSWD: ALL
     ------------------------------------------------------------------
-5. Deshabilitar swap en todos los nodos (Para Kubernetes)
+5. *** Lo he metido dentro del playbook de kubernetes.***
+    Deshabilitar swap en todos los nodos (Para Kubernetes)
     sudo swapoff -a
     sudo sed -i '/swap/d' /etc/fstab  # Deshabilitar swap permanentemente
     ------------------------------------------------------------------
@@ -126,32 +134,47 @@ ansible all -i ansible/inventory -m ping
         sudo apt update && sudo apt upgrade -y
     --------------------------------
     2. Instalar Ansible
-        sudo apt install -y software-properties-common gnupg2 curl
-        curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
-        echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
-        
-        sudo apt install terraform
-        sudo apt install ansible
-    --------------------------------
+        - sudo apt install -y software-properties-common gnupg2 curl
+        - curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+        - echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+        - sudo apt install ansible
+        --------------------------------
     3. Instalar y generar las claves SSH
     - Instalar ssh
         apt install openssh-server -y
     - Generar la clave
-        ssh-keygen -t rsa -b 4096
-        - Pulsar enter cuando pregunta donde guardar las claves
+    * Hacerlo todo con el usuario asan.
+        asan@ansible: sudo ssh-keygen -t rsa -b 4096
+
+    - Pulsar "/home/asan/.ssh/id_rsa" cuando pregunta donde guardar las claves
         - Deja en blanco la contraseña
+
     - verificar que se han creado:
             ls ~/.ssh/
+
     - Pasar la clave a los hosts.
         ssh-copy-id -i ~/.ssh/id_rsa.pub asan@192.168.1.12
         ssh-copy-id -i ~/.ssh/id_rsa.pub asan@192.168.1.13
-    - Revisar que se han pasado las claves:
+
+    - Permisos de los archivos
+        sudochmod 700 /home/asan/.ssh
+        sudo chmod 600 /home/asan/.ssh/id_rsa
+        sudo chmod 644 /home/asan/.ssh/id_rsa.pub
+        sudo chmod 644 /home/asan/.ssh/authorized_keys
+        sudo chown -R asan:asan /home/asan/.ssh
+        
+    - Verificar Conexión y Revisar que se han pasado las claves:
         ssh asan@192.168.1.12
         cat ~/.ssh/authorized_keys
+
+
+
+        
     ----------------------
     - Otra Opción: Ejecutar el script "setup-ssh-keys.sh".
         - chmod +x setup-ssh-keys.sh
         - ./setup-ssh-keys.sh
+
     --------------------------------
     4. Crear la base de datos y la web con kubernetes
     -- Configmap
@@ -164,3 +187,42 @@ ansible all -i ansible/inventory -m ping
         kubectl apply -f kubernetes/web-deployment.yaml
         kubectl apply -f kubernetes/web-service.yaml
 --------------------------------------------------------------------------
+
+
+
+Fallos
+1. En caso de fallo de ...:
+    1. "corregido " - En repositorios de kubernetes
+        - lista de repositorios
+            ls /etc/apt/sources.list.d/
+        - eliminarlo
+            sudo rm /etc/apt/sources.list.d/kubernetes.list
+
+    2. "corregido " - * Los servidores tienen que tener 2 cpu si no no funciona.
+
+    3. "corregido " - playbook de kubernetes, añade mal la variable de netorno de 
+        - name: Update Kubeadm Environment Variable
+        blockinfile:
+            path: /usr/lib/systemd/system/kubelet.service.d/10-kubeadm.conf
+            block: |
+            [Service]
+            Environment="KUBELET_EXTRA_ARGS=--fail-swap-on=false"
+            marker: "# {mark} ANSIBLE MANAGED BLOCK"
+
+    4. Fallo en 
+        - name: Initialize Kubernetes control plane
+        command: kubeadm init --pod-network-cidr=10.244.0.0/16
+        args:
+            creates: /etc/kubernetes/admin.conf
+        become: true
+        register: kubeadm_init_output
+
+    5. Fallo en el worker con container.io.
+
+    6. Fallo al conectar al cluster de kubernetes
+
+        - He creado claves ssh en worker y master y se las he pasado al contrario
+        - Verificar la Resolución DNS
+        - Verificar la Conexión SSH Manualmente
+   
+    - 7. 

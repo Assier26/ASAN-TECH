@@ -4,25 +4,25 @@
 echo "Configurando permisos de los archivos..."
 
 # Playbooks de Ansible
-chmod 644 ansible/*.yml
+sudo chmod 644 ansible/*.yml
 
 # Scripts de Shell
-chmod 755 *.sh
+sudo chmod 755 *.sh
 
 # Archivos YAML de Kubernetes
-chmod 644 kubernetes/*.yaml
+sudo chmod 644 kubernetes/*.yaml
 
 # Archivos de la página web
-chmod 644 web/*
+sudo chmod 644 web/*
 
 # Archivos de configuración
-chmod 644 ansible/inventory
+sudo chmod 644 ansible/inventory
 
 # Archivos de base de datos
-chmod 644 database/init.sql
+sudo chmod 644 database/init.sql
 
 # Directorios
-chmod 755 ansible/ kubernetes/ web/ database/
+sudo chmod 755 ansible/ kubernetes/ web/ database/
 
 echo "Permisos configurados correctamente."
 
@@ -75,4 +75,4 @@ else
   exit 1
 fi
 
-echo "Despliegue completado exitosamente."s
+echo "Despliegue completado exitosamente."

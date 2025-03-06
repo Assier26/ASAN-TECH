@@ -1,13 +1,13 @@
 [all:vars]
 ansible_user=asan
-ansible_ssh_private_key_file=/home/asan/.ssh/id_rsa  # Ruta a tu clave privada SSH
+
 
 [master]
-master ansible_host=192.168.1.11
+master1 ansible_host=master1
 
 [workers]
-worker1 ansible_host=192.168.1.12
+worker1 ansible_host=worker1
 
-[kube-cluster:children]
+[kubecluster:children]
 master
 workers

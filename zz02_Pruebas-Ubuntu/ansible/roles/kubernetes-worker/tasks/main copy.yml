@@ -1,0 +1,110 @@
+
+- name: Install Docker
+  apt:
+    name: docker.io
+    state: present
+    update_cache: yes
+
+- name: Install containerd
+  apt:
+    name: containerd
+    state: present
+    update_cache: yes
+  become: true
+
+- name: Disable swap
+  command: swapoff -a
+
+- name: Ensure swap is disabled on boot
+  lineinfile:
+    path: /etc/fstab
+    regexp: '^/swap.img'
+    line: '#/swap.img none swap sw 0 0'
+    state: present
+
+- name: Add kernel modules for Containerd
+  copy:
+    dest: /etc/modules-load.d/containerd.conf
+    content: |
+      overlay
+      br_netfilter
+
+- name: Load kernel modules for Containerd
+  command: modprobe overlay && modprobe br_netfilter
+  become: true
+
+- name: Add kernel parameters for Kubernetes
+  copy:
+    dest: /etc/sysctl.d/kubernetes.conf
+    content: |
+      net.bridge.bridge-nf-call-ip6tables = 1
+      net.bridge.bridge-nf-call-iptables = 1
+      net.ipv4.ip_forward = 1
+
+- name: Load kernel parameter changes
+  command: sysctl --system
+
+
+
+- name: Ensure /etc/containerd directory exists
+  file:
+    path: /etc/containerd
+    state: directory
+    mode: '0755'
+
+- name: Generate default containerd configuration
+  command: containerd config default > /etc/containerd/config.toml
+  become: true
+  args:
+    creates: /etc/containerd/config.toml  # Solo se ejecuta si el archivo no existe
+
+- name: Configuring Containerd (Setting SystemdCgroup Variable to True)
+  lineinfile:
+    path: /etc/containerd/config.toml
+    regexp: '^SystemdCgroup = false'
+    line: 'SystemdCgroup = true'
+    state: present
+  become: true
+
+- name: Restart containerd service
+  service:
+    name: containerd
+    state: restarted
+  become: true
+
+
+
+
+- name: Reload systemd configuration
+  command: systemctl daemon-reload
+
+- name: Restart containerd service
+  service:
+    name: containerd
+    state: restarted
+
+- name: Install Kubernetes components
+  apt:
+    name:
+      - kubelet
+      - kubeadm
+      - kubectl
+    state: present
+    update_cache: yes
+
+- name: Hold kubelet, kubeadm, kubectl packages
+  command: apt-mark hold kubelet kubeadm kubectl
+  become: true
+
+- name: Read Join Command from Master
+  slurp:
+    path: /tmp/join-command
+  register: join_command
+  delegate_to: master
+
+- name: Join Kubernetes cluster
+  command: "{{ join_command.content | b64decode }}"
+  become: true
+
+
+
