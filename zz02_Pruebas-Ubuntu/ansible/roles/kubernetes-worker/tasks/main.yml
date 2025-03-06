@@ -155,3 +155,13 @@
 - name: Join Kubernetes cluster
   command: "{{ join_command.content | b64decode }}"
   become: true
+
+
+- name: Verify cluster status
+  shell: |
+    kubectl get nodes
+  register: nodes
+  until: "'Ready' in nodes.stdout"
+  retries: 10
+  delay: 10
+  ignore_errors: yes

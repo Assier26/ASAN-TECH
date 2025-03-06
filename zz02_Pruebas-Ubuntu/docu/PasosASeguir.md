@@ -376,7 +376,7 @@ sudo kubeadm init --pod-network-cidr=10.244.0.0/16 --apiserver-advertise-address
 
 
 
-
+sudo netstat -tuln
 sudo cat /etc/kubernetes/manifests/kube-apiserver.yaml
 sudo cat /etc/kubernetes/manifests/kube-controller-manager.yaml
 sudo cat /etc/kubernetes/manifests/kube-scheduler.yaml
@@ -409,4 +409,36 @@ fatal: [master1]: FAILED! => {"attempts": 30, "changed": false, "elapsed": 0, "m
 
 TASK [kubernetes-master : Fail if API server is not available after retries] ***********************************************************************************************************
 fatal: [master1]: FAILED! => {"changed": false, "msg": "El API server no está disponible después de 5 minutos. Verifica el estado del clúster."}
+
+
+
+
+sudo systemctl status kubelet
+sudo systemctl start kubelet
+sudo journalctl -xeu kubelet
+
+
+
+sudo systemctl status containerd
+sudo systemctl restart containerd
+
+
+sudo kubeadm config images pull --kubernetes-version v1.30.10
+
+
+
+
+sudo cat /etc/kubernetes/manifests/kube-apiserver.yaml
+sudo cat /etc/kubernetes/manifests/kube-controller-manager.yaml
+sudo cat /etc/kubernetes/manifests/kube-scheduler.yaml
+sudo cat /etc/kubernetes/manifests/etcd.yaml
+
+
+
+sudo systemctl status kube-apiserver
+
+
+
+
+
 
