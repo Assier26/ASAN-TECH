@@ -142,20 +142,16 @@
 
 
 
-
+# Unirse al kluster
 - name: Read Join Command from Master
   slurp:
     path: /tmp/join-command
   register: join_command
   delegate_to: master1
 
-
-
-
 - name: Join Kubernetes cluster
   command: "{{ join_command.content | b64decode }}"
   become: true
-
 
 - name: Verify cluster status
   shell: |
