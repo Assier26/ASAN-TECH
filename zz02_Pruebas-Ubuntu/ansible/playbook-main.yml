@@ -4,20 +4,17 @@
 # 1. Configuraciones comunes a todos los nodos
 - import_playbook: 01-configuraciones-comunes.yml
 
-# 2. Instalar Docker en todos los nodos
-- import_playbook: 02-instalar-docker.yml
+# 2. Instalar Kubernetes en todos los nodos
+- import_playbook: 02-instalar-kubernetes.yml
 
-# 3. Instalar Kubernetes en todos los nodos
-- import_playbook: 03-instalar-kubernetes.yml
-
-# 4. Configurar el nodo Master de Kubernetes
+# 3. Configurar el nodo Master de Kubernetes
 - import_playbook: 04-configurar-master.yml
 
-# 5. Configurar los nodos Workers de Kubernetes
+# 4. Configurar los nodos Workers de Kubernetes
 - import_playbook: 05-configurar-workers.yml
 
-# 6. Desplegar la aplicación (MySQL y página web) en Kubernetes
+# 5. Desplegar la aplicación (MySQL y página web) en Kubernetes
 - import_playbook: 06-desplegar-aplicacion.yml
 
-# 7. Verificar el clúster y los servicios desplegados
+# 6. Verificar el clúster y los servicios desplegados
 - import_playbook: 07-verificar-cluster.yml

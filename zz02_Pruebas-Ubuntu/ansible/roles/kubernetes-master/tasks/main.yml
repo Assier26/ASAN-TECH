@@ -1,194 +1,5 @@
-#
-# Archivo de configuración de Kubernetes-master
-#
-# Antes de iniciar
-# 1. dependencias
-# 2. Memoria Swap
-# 4. firewall
-# 5. reglas forwarod y Modulos del kernel
-# 6. paquetes
-    # 1. containerd
-        # 1. configuración
-        # 2. plugin CRI
-        # 3. reiniciar
-    # 2. kubernetes
-# 7. Iniciar el cluster
-# 8. configurar kubectl para el usuario actual
-# 9. desplegar plugin de red.
-
 #-------------------------------------------------------
-# 1. dependencias
-#-------------------------------------------------------
-# ----  Instalación kubernetes  ----
-# Añadir la clave GPG de Kubernetes
-- name: Crear directorio para claves GPG
-  file:
-    path: /etc/apt/keyrings
-    state: directory
-    mode: '0755'
-
-- name: Descargando GPG key securely para Kubernetes
-  shell: curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.32/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-  become: true
-
-- name: Cambiar permisos del archivo GPG
-  file:
-    path: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-    mode: '0644'
-
-- name: Agregar Repositorio de Kubernetes
-  shell: echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.32/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
-  become: true
-
-- name: Cambiar permisos del archivo kubernenetes.list
-  file:
-    path: /etc/apt/sources.list.d/kubernetes.list
-    mode: '0644'
-
-# Actualizar Repositorios
-- name: Actualizar los Repositorios
-  apt:
-    update_cache: yes
-    cache_valid_time: 3600
-
-#-------------------------------------------------------
-# 2. Desactivar el swap
-#-------------------------------------------------------
-
-- name: Desactivando memoria swap para Kubernetes
-  command: swapoff -a
-
-- name: Desactivar swap en /etc/fstab
-  lineinfile:
-    path: /etc/fstab
-    regexp: '^/swap.img'
-    line: '#/swap.img none swap sw 0 0'
-    state: present
-
-#-------------------------------------------------------
-# 3. firewall
-#-------------------------------------------------------
-# Configuración del firewall
-- name: Enable the firewall
-  ufw:
-    state: enabled
-
-- name: Allow required ports through firewall
-  ufw:
-    rule: allow
-    port: "{{ item }}"
-    proto: tcp
-  loop:
-    - 6443  # Kubernetes API server
-    - 2379  # etcd client requests
-    - 2380  # etcd peer communication
-    - 22    # SSH
-    - 8080  # Optional: Kubernetes API insecure port
-    - 10250 # Kubelet API
-    - 10251 # Scheduler
-    - 10252 # Controller Manager
-    - 10255 # Read-only Kubelet API
-    - 5473  # Calico networking
-
-- name: Reload the firewall
-  command: ufw reload
-#----------------------------------------------
-# 4. Reglas forward y Modulos del kernel
-#--------------------------------
-# Preparando el sistema para instalar Docker y Containerd
-- name: Añadiendo modulos del kernel para Containerd
-  copy:
-    dest: /etc/modules-load.d/containerd.conf
-    content: |
-      overlay
-      br_netfilter
-
-- name: Load kernel modules for Containerd
-  command: modprobe overlay && modprobe br_netfilter
-  become: true
-
-- name: Añadiendo modulos del kernel para Kubernetes
-  copy:
-    dest: /etc/sysctl.d/kubernetes.conf
-    content: |
-      net.bridge.bridge-nf-call-ip6tables = 1
-      net.bridge.bridge-nf-call-iptables = 1
-      net.ipv4.ip_forward = 1
-
-- name: Aplicar cambios de configuración
-  command: sysctl --system
-
-#----------------------------------------------
-# 5. Instalación de Paquetes y Configuración
-#--------------------------------
-# 1. containerd
-- name: Instalando containerd
-  apt:
-    name: containerd
-    state: present
-    update_cache: yes
-  become: true
-
-    # 1. configuración
-  # Crear el directorio /etc/containerd si no existe
-- name: Crear directorio /etc/containerd
-  file:
-    path: /etc/containerd
-    state: directory
-    mode: '0777'
-
-      # Crear la configuración por defecto de containerd
-- name: Crear la configuración por defecto de containerd
-  shell: containerd config default > /etc/containerd/config.toml
-  become: true
-  args:
-      creates: /etc/containerd/config.toml
-
-
-
-
-    # 2. plugin CRI
-- name: Configuring Containerd (Setting SystemdCgroup Variable to True)
-  replace:
-    path: /etc/containerd/config.toml
-    regexp: 'SystemdCgroup = false'
-    replace: 'SystemdCgroup = true'
-  become: true
-
-
-    # 3. Reiniciar y Habilitar containerd para que se inicie automáticamente al arrancar el sistema
-- name: Reiniciar containerd
-  systemd:
-    name: containerd
-    state: restarted
-
-- name: Habilitar containerd
-  systemd:
-    name: containerd
-    enabled: yes
-
-# 2. kubernetes
-  # Instalamos
-- name: Instalando kubeadm, kubelet, kubectl
-  apt:
-    name:
-      - kubelet
-      - kubeadm
-      - kubectl
-    state: present
-    update_cache: yes
-
-- name: Manterner versiones de kubeadm, kubelet, kubectl
-  command: apt-mark hold kubelet kubeadm kubectl
-  become: true
-
-  # Habilitar kubelet y verificar la instalación
-- name: Habilitat kubelet
-  command: systemctl enable --now kubelet
-  become: true
-
-#-------------------------------------------------------
-# 6. Iniciar el cluster
+# 1. Iniciar el cluster
 #-------------------------------------------------------
 # - name: Pull kubeadm container images
   # command: kubeadm config images pull --kubernetes-version v1.30.10
@@ -200,7 +11,7 @@
     creates: /etc/kubernetes/admin.conf
 
 #-------------------------------------------------------
-# 7. configurar kubectl para el usuario actual
+# 2. configurar kubectl para el usuario actual
 #-------------------------------------------------------
 - name: Configurar kubectl para el usuario actual
   block:
@@ -225,8 +36,9 @@
         mode: '0644'
       become: yes  # Esto es importante para cambiar el dueño como root
   when: inventory_hostname == "master1"
+
 #-------------------------------------------------------
-# 8. Unir un worker al clúster (solo en el nodo maestro)
+# 3. Crear el comando de union del worker	
 #-------------------------------------------------------
 - name: Obtener el comando de unión del worker
   command: kubeadm token create --print-join-command
@@ -237,12 +49,27 @@
   debug:
     msg: "Comando para unir el worker: {{ join_command.stdout }}"
   when: inventory_hostname == "master1"
+
+- name: Guardar el comando de unión en un archivo temporal
+  copy:
+    content: "{{ join_command.stdout }}"
+    dest: /tmp/join_command.sh
+    mode: '0755'
+
+- name: Copiar el archivo al nodo de control
+  fetch:
+    src: /tmp/join_command.sh
+    dest: /tmp/join_command.sh
+    flat: yes
+
+
 #-------------------------------------------------------
-# 9. desplegar plugin de red.
+# 4. desplegar plugin de red.
 #-------------------------------------------------------
 - name: Desplegar un plugin de red (Calico)
   command: kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
   when: inventory_hostname == "master1"
+
 #-------------------------------------------------------
 # 10. Ingress Controller para exponer los servicios.
 #-------------------------------------------------------
