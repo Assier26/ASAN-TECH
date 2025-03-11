@@ -1,6 +1,0 @@
-- hosts: master
-  become: yes
-  vars:
-    service: "{{ servicio }}"
-  roles:
-    - deploy-service

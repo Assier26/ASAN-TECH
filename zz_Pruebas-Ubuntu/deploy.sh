@@ -1,31 +1,5 @@
 #!/bin/bash
 
-# --- Configuración de permisos ---
-echo "Configurando permisos de los archivos..."
-
-# Playbooks de Ansible
-sudo chmod 644 ansible/*.yml
-
-# Scripts de Shell
-sudo chmod 755 *.sh
-
-# Archivos YAML de Kubernetes
-sudo chmod 644 kubernetes/*.yaml
-
-# Archivos de la página web
-sudo chmod 644 web/*
-
-# Archivos de configuración
-sudo chmod 644 ansible/inventory
-
-# Archivos de base de datos
-sudo chmod 644 database/init.sql
-
-# Directorios
-sudo chmod 755 ansible/ kubernetes/ web/ database/
-
-echo "Permisos configurados correctamente."
-
 # --- Verificación de conectividad SSH ---
 echo "Verificando conexión SSH a los hosts..."
 ansible all -i ansible/inventory -m ping

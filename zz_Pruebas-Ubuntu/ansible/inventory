@@ -1,7 +1,6 @@
 [all:vars]
 ansible_user=asan
 
-
 [master]
 master1 ansible_host=master1
 

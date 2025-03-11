@@ -8,13 +8,16 @@
 - import_playbook: 02-instalar-kubernetes.yml
 
 # 3. Configurar el nodo Master de Kubernetes
-- import_playbook: 04-configurar-master.yml
+- import_playbook: 03-configurar-master.yml
 
 # 4. Configurar los nodos Workers de Kubernetes
-- import_playbook: 05-configurar-workers.yml
+- import_playbook: 04-configurar-workers.yml
 
-# 5. Desplegar la aplicación (MySQL y página web) en Kubernetes
-- import_playbook: 06-desplegar-aplicacion.yml
+# 5. Desplegar la aplicación (MySQL y página web) en Kubernetes-master
+- import_playbook: 05-desplegar-web.yml
 
-# 6. Verificar el clúster y los servicios desplegados
+# 6. Desplegar la aplicación (MySQL y página web) en Kubernetes
+- import_playbook: 06-desplegar-servicios.yml
+
+# 7. Verificar el clúster y los servicios desplegados
 - import_playbook: 07-verificar-cluster.yml

@@ -1,6 +1,0 @@
-- hosts: workers
-  become: yes
-  roles:
-    - common
-    - docker
-    - kubernetes-worker
