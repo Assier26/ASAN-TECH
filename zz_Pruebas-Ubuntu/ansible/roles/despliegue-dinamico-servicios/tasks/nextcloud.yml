@@ -1,0 +1,69 @@
+---
+# roles/despliegue-dinamico-servicios/tasks/nextcloud.yml
+
+- name: Crear despliegue para Nextcloud
+  k8s:
+    state: present
+    definition:
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: "nextcloud-deployment"
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            app: "nextcloud"
+        template:
+          metadata:
+            labels:
+              app: "nextcloud"
+          spec:
+            containers:
+              - name: "nextcloud"
+                image: "nextcloud"
+                ports:
+                  - containerPort: 80
+                volumeMounts:
+                  - name: nextcloud-data
+                    mountPath: /var/www/html
+            volumes:
+              - name: nextcloud-data
+                persistentVolumeClaim:
+                  claimName: "nextcloud-data-pvc"
+
+- name: Crear servicio para Nextcloud
+  k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: "nextcloud-service"
+      spec:
+        ports:
+          - port: 80
+            targetPort: 80
+        selector:
+          app: "nextcloud"
+
+- name: Crear Ingress para Nextcloud
+  k8s:
+    state: present
+    definition:
+      apiVersion: networking.k8s.io/v1
+      kind: Ingress
+      metadata:
+        name: "nextcloud-ingress"
+      spec:
+        rules:
+          - host: "nextcloud.asan-tech.com"
+            http:
+              paths:
+                - path: /
+                  pathType: Prefix
+                  backend:
+                    service:
+                      name: "nextcloud-service"
+                      port:
+                        number: 80

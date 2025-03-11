@@ -1,5 +1,18 @@
 ---
-- hosts: worker1
+- name: Verificar que el Ingress Controller esté instalado
+  command: kubectl get deployment -n ingress-nginx ingress-nginx-controller
+  register: ingress_status
+  ignore_errors: yes
+
+- name: Fallar si el Ingress Controller no está instalado
+  fail:
+    msg: "El Ingress Controller no está instalado. Ejecuta el playbook principal primero."
+  when: ingress_status.rc != 0
+
+- name: Desplegar servicio dinámico (Nextcloud o FacturaScript)
+  hosts: worker1
   become: yes
+  vars:
+    servicio_elegido: "{{ servicio }}"
   roles:
     - despliegue-dinamico-servicios

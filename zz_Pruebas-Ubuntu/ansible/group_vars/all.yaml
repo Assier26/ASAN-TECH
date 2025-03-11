@@ -33,10 +33,4 @@ cert_file: "/ruta/al/mi-certificado.crt"  # Ruta al archivo del certificado
 key_file: "/ruta/al/mi-clave-privada.key"  # Ruta al archivo de la clave privada
 
 
-
-# Variables para desplegar servicios dinámicos
-service_name: "{{ servicio_elegido }}"  # Variable dinámica (Nextcloud o FacturaScript)
-app_image: "{{ 'nextcloud' if service_name == 'nextcloud' else 'facturascript/facturascript' }}"
-app_port: 80
-ingress_host: "{{ service_name }}.asan-tech.com"
-
+servicio_elegido: "{{ servicio }}"

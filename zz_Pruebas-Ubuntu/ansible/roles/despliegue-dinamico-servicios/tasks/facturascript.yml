@@ -1,0 +1,124 @@
+---
+# roles/despliegue-dinamico-servicios/tasks/facturascript.yml
+
+- name: Crear despliegue para la base de datos de FacturaScript
+  k8s:
+    state: present
+    definition:
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: "facturascript-db-deployment"
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            app: "facturascript-db"
+        template:
+          metadata:
+            labels:
+              app: "facturascript-db"
+          spec:
+            containers:
+              - name: "facturascript-db"
+                image: "mysql:8.0"
+                env:
+                  - name: MYSQL_ROOT_PASSWORD
+                    value: "mi_contraseña_segura"
+                  - name: MYSQL_DATABASE
+                    value: "facturascripts"
+                  - name: MYSQL_USER
+                    value: "facturascripts"
+                  - name: MYSQL_PASSWORD
+                    value: "fs_password"
+                ports:
+                  - containerPort: 3306
+                volumeMounts:
+                  - name: facturascript-db-data
+                    mountPath: /var/lib/mysql
+            volumes:
+              - name: facturascript-db-data
+                persistentVolumeClaim:
+                  claimName: "facturascript-db-data-pvc"
+
+- name: Crear servicio para la base de datos de FacturaScript
+  k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: "facturascript-db-service"
+      spec:
+        ports:
+          - port: 3306
+            targetPort: 3306
+        selector:
+          app: "facturascript-db"
+
+- name: Crear despliegue para FacturaScript
+  k8s:
+    state: present
+    definition:
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: "facturascript-deployment"
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            app: "facturascript"
+        template:
+          metadata:
+            labels:
+              app: "facturascript"
+          spec:
+            containers:
+              - name: "facturascript"
+                image: "facturascripts/facturascripts"
+                ports:
+                  - containerPort: 80
+                volumeMounts:
+                  - name: facturascript-data
+                    mountPath: /var/www/html
+            volumes:
+              - name: facturascript-data
+                persistentVolumeClaim:
+                  claimName: "facturascript-data-pvc"
+
+- name: Crear servicio para FacturaScript
+  k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: "facturascript-service"
+      spec:
+        ports:
+          - port: 80
+            targetPort: 80
+        selector:
+          app: "facturascript"
+
+- name: Crear Ingress para FacturaScript
+  k8s:
+    state: present
+    definition:
+      apiVersion: networking.k8s.io/v1
+      kind: Ingress
+      metadata:
+        name: "facturascript-ingress"
+      spec:
+        rules:
+          - host: "facturascript.asan-tech.com"
+            http:
+              paths:
+                - path: /
+                  pathType: Prefix
+                  backend:
+                    service:
+                      name: "facturascript-service"
+                      port:
+                        number: 80
