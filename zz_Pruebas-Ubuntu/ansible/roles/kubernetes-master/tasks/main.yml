@@ -6,7 +6,7 @@
   # become: true
 
 - name: Inicializar el clúster de Kubernetes
-  command: kubeadm init --pod-network-cidr=10.244.0.0/16
+  command: kubeadm init --pod-network-cidr={{ pod_network }}
   args:
     creates: /etc/kubernetes/admin.conf
 
@@ -45,23 +45,37 @@
   register: join_command
   when: inventory_hostname == "master1"
 
-- name: Mostrar el comando de unión
-  debug:
-    msg: "Comando para unir el worker: {{ join_command.stdout }}"
+- name: Extraer el token del comando de unión
+  set_fact:
+    kubeadm_token: "{{ join_command.stdout | regex_search('--token\\s+(\\S+)', '\\1') }}"
   when: inventory_hostname == "master1"
 
-- name: Guardar el comando de unión en un archivo temporal
+- name: Extraer el hash del certificado CA del comando de unión
+  set_fact:
+    kubeadm_ca_hash: "{{ join_command.stdout | regex_search('--discovery-token-ca-cert-hash\\s+(\\S+)', '\\1') }}"
+  when: inventory_hostname == "master1"
+
+- name: Mostrar el token y el hash generados
+  debug:
+    msg: >
+      Token generado: {{ kubeadm_token }}
+      Hash del certificado CA: {{ kubeadm_ca_hash }}
+  when: inventory_hostname == "master1"
+
+- name: Guardar el token y el hash en un archivo temporal
   copy:
-    content: "{{ join_command.stdout }}"
-    dest: /tmp/join_command.sh
-    mode: '0755'
+    content: |
+      kubeadm_token: "{{ kubeadm_token }}"
+      kubeadm_ca_hash: "{{ kubeadm_ca_hash }}"
+    dest: /tmp/kubeadm_join_vars.txt
+  when: inventory_hostname == "master1"
 
 - name: Copiar el archivo al nodo de control
   fetch:
-    src: /tmp/join_command.sh
-    dest: /tmp/join_command.sh
+    src: /tmp/kubeadm_join_vars.txt
+    dest: /tmp/kubeadm_join_vars.txt
     flat: yes
-
+  when: inventory_hostname == "master1"
 
 #-------------------------------------------------------
 # 4. desplegar plugin de red.
@@ -70,11 +84,3 @@
   command: kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
   when: inventory_hostname == "master1"
 
-#-------------------------------------------------------
-# 10. Ingress Controller para exponer los servicios.
-#-------------------------------------------------------
-# FUTURA IMPLEMENTACIÓN
-# - name: Desplegar un controlador de Ingress (Nginx) para exponer los servicios
-#   command: kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/baremetal/deploy.yaml
-#   when: inventory_hostname == "master1"
-#-------------------------------------------------------

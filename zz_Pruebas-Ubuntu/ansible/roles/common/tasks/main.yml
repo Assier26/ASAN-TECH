@@ -4,7 +4,6 @@
 - name: Update apt cache
   apt:
     update_cache: yes
-    ignore_errors: yes
 #-------------------------------------------------------
 - name: Install required packages
   apt:

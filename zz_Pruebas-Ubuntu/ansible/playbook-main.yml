@@ -14,10 +14,10 @@
 - import_playbook: 04-configurar-workers.yml
 
 # 5. Desplegar la aplicación (MySQL y página web) en Kubernetes-master
-- import_playbook: 05-desplegar-web.yml
+- import_playbook: 05-desplegar-IngressController.yml
 
 # 6. Desplegar la aplicación (MySQL y página web) en Kubernetes
-- import_playbook: 06-desplegar-servicios.yml
+- import_playbook: 06-desplegar-web.yml
 
-# 7. Verificar el clúster y los servicios desplegados
+# 8. Verificar el clúster y los servicios desplegados
 - import_playbook: 07-verificar-cluster.yml

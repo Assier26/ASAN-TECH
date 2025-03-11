@@ -105,3 +105,5 @@ echo "Copiando la clave pública a los hosts..."
 ssh-copy-id -i /home/asan/.ssh/id_rsa.pub asan@master1  # Master1
 ssh-copy-id -i /home/asan/.ssh/id_rsa.pub asan@worker1  # Worker1
 #ssh-copy-id -i /home/asan/.ssh/id_rsa.pub asan@192.168.1.14  # Worker2
+
+ansible-galaxy collection install kubernetes.core

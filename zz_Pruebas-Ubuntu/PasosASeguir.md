@@ -58,6 +58,7 @@
     - 5. Despliegue de servicios: Despliega MySQL y la página web en Kubernetes.
     - 6. Verificación: Verifica que todo esté funcionando correctamente.
 -------------------------------------------------------------------------
+
     --- Despliegue del Proyecto ---
 
     ----------------------
@@ -284,3 +285,178 @@ Pasos que áun faltan
 3. despliegue de aplicaciones.
 4. Configuración de ingress Controles para exponer servicios.
 5. Automatización de la contratación y levantamiento de servicios.
+
+----------------------------------
+2. Flujo de Trabajo Recomendado
+El orden correcto para exponer un servicio con el Ingress Controller es:
+
+1. Desplegar la aplicación:
+    - Crea los pods que ejecutan tu aplicación.
+    - Asegúrate de que los pods estén en estado Running.
+2. Crear un servicio:
+    - Define un servicio para exponer los pods internamente en el clúster.
+    - El servicio debe tener un selector que coincida con las etiquetas de los pods.
+3. Desplegar el Ingress Controller:
+    - Instala el Ingress Controller (por ejemplo, Nginx Ingress Controller).
+4. Crear un recurso Ingress:
+    - Configura un recurso Ingress para enrutar el tráfico externo al servicio.
+----------------------------------
+
+1. Si usaste un Service de tipo NodePort
+Cuando expones un servicio como NodePort, Kubernetes asigna un puerto en el rango 30000-32767 en cada nodo del clúster. Puedes acceder a la aplicación usando la IP de cualquier nodo y ese puerto.
+
+Pasos:
+Obtén la IP del nodo:
+
+Si estás en un entorno local (por ejemplo, Minikube), usa:
+
+bash
+Copy
+minikube ip
+Si estás en un clúster en la nube o on-premise, obtén la IP de uno de los nodos.
+
+Obtén el puerto asignado:
+
+Verifica el puerto asignado al servicio:
+
+bash
+Copy
+kubectl get svc mi-servicio
+Verás algo como esto:
+
+Copy
+NAME         TYPE       CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
+mi-servicio  NodePort   10.96.123.45    <none>        80:30001/TCP   5m
+Aquí, el puerto asignado es 30001.
+
+Accede a la aplicación:
+
+Abre un navegador web y visita:
+
+Copy
+http://<IP-del-nodo>:<Puerto-NodePort>
+Por ejemplo:
+
+Copy
+http://192.168.1.100:30001
+2. Si usaste un Ingress Controller
+Si configuraste un Ingress Controller y un recurso Ingress, puedes acceder a la aplicación usando el dominio que definiste en el recurso Ingress.
+
+Pasos:
+Obtén la IP del Ingress Controller:
+
+Verifica la IP del servicio del Ingress Controller:
+
+bash
+Copy
+kubectl get svc -n ingress-nginx
+Verás algo como esto:
+
+Copy
+NAME                     TYPE           CLUSTER-IP      EXTERNAL-IP     PORT(S)                      AGE
+ingress-nginx-controller LoadBalancer   10.96.123.45    192.168.1.100   80:30001/TCP,443:30002/TCP   5m
+Aquí, la IP externa es 192.168.1.100.
+
+Configura el DNS:
+
+Si estás en un entorno de producción, configura un registro DNS para que el dominio (por ejemplo, mi-app.com) apunte a la IP del Ingress Controller.
+
+Si estás en un entorno de prueba, puedes editar el archivo /etc/hosts en tu máquina local para mapear el dominio a la IP:
+
+Copy
+192.168.1.100 mi-app.com
+Accede a la aplicación:
+
+Abre un navegador web y visita:
+
+Copy
+http://mi-app.com
+Si configuraste SSL/TLS, visita:
+
+Copy
+https://mi-app.com
+
+
+
+----------- Flujo General   ----------
+1. Usuario contrata un servicio:
+    - El usuario accede a la aplicación web (Asan-tech) a través del Ingress Controller.
+    - En la web, elige un servicio (por ejemplo, Nextcloud o FacturaScript) y hace clic en "Contratar".
+
+2. La aplicación web procesa la solicitud:
+    - El backend de la aplicación web (PHP) recibe la elección del usuario.
+    - El backend ejecuta un playbook de Ansible para desplegar el servicio en Kubernetes.
+
+3. Ansible despliega el servicio:
+    - Ansible usa las variables dinámicas para desplegar el servicio elegido.
+    - El servicio se expone a través de un nuevo Ingress (por ejemplo, nextcloud.asan-tech.com o facturascript.asan-tech.com).
+
+4. Usuario accede al servicio:
+    - Una vez desplegado, el usuario puede acceder al servicio a través del dominio correspondiente.
+
+mi-proyecto/
+├── app/                          # Código PHP de la aplicación web
+│   ├── index.php                 # Página principal
+│   ├── contratar.php             # Lógica para contratar servicios
+│   ├── ...
+├── ansible/
+│   ├── playbook.yml              # Playbook para desplegar servicios
+│   ├── inventory                 # Inventario de Ansible
+├── kubernetes/
+│   ├── asan-tech-deployment.yaml # Despliegue de la aplicación web
+│   ├── asan-tech-service.yaml    # Servicio de la aplicación web
+│   ├── asan-tech-ingress.yaml    # Ingress de la aplicación web
+
+Si la aplicación web está desplegada en Kubernetes, el código PHP debe estar en un volumen montado en el contenedor.
+
+Esto es útil si la aplicación web es parte de tu clúster de Kubernetes.
+Ejemplo en PHP
+-------------------------
+<?php
+// contratar.php
+
+// 1. Recibir la elección del usuario
+$servicio_elegido = $_POST['servicio'];  // nextcloud o facturascript
+
+// 2. Validar la elección
+if ($servicio_elegido !== 'nextcloud' && $servicio_elegido !== 'facturascript') {
+    die("Servicio no válido.");
+}
+
+// 3. Ejecutar el playbook de Ansible
+$command = "ansible-playbook /ruta/al/playbook.yml -e 'servicio_elegido=$servicio_elegido'";
+$output = shell_exec($command);
+
+// 4. Mostrar el resultado al usuario
+echo "<h1>Servicio contratado: $servicio_elegido</h1>";
+echo "<pre>$output</pre>";  // Mostrar la salida de Ansible
+echo "<p>Accede al servicio en: <a href='http://$servicio_elegido.asan-tech.com'>$servicio_elegido.asan-tech.com</a></p>";
+?>
+---------------------
+
+Cómo Funciona el Código PHP
+1. Recibe la elección del usuario:
+    - El usuario elige un servicio en un formulario HTML y envía la solicitud a contratar.php.
+    - El servicio elegido se recibe en $_POST['servicio'].
+
+2. Valida la elección:
+    - Asegúrate de que el servicio elegido sea válido (nextcloud o facturascript).
+
+3. Ejecuta el playbook de Ansible:
+    - Usa shell_exec para ejecutar el playbook de Ansible con la variable servicio_elegido.
+
+4. Muestra el resultado al usuario:
+    - Muestra un mensaje confirmando que el servicio ha sido contratado.
+    - Proporciona un enlace para acceder al servicio.
+
+Integración Completa
+1. El usuario accede a asan-tech.com:
+ - El Ingress redirige el tráfico a la aplicación web.
+2. El usuario contrata un servicio:
+ - El formulario envía la solicitud a contratar.php.
+3. El backend ejecuta Ansible:
+ - contratar.php ejecuta el playbook de Ansible para desplegar el servicio.
+4. El servicio se despliega:
+ - Ansible crea el despliegue, servicio e Ingress para el servicio contratado.
+5. El usuario accede al servicio:
+- El servicio está disponible en nextcloud.asan-tech.com o facturascript.asan-tech.com.

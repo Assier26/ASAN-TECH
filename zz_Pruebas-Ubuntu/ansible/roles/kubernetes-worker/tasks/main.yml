@@ -1,16 +1,15 @@
 #-------------------------------------------------------
-# 1. Copiar el comando de join.
-#-------------------------------------------------------
-- name: Copiar el archivo al worker
-      copy:
-        src: /tmp/join_command.sh
-        dest: /tmp/join_command.sh
-        mode: '0755'
-
-#-------------------------------------------------------
-# 2. Unirse al clúster usando kubeadm join
+# 1. Unirse al clúster usando kubeadm join
 #-------------------------------------------------------
 - name: Unirse al clúster de Kubernetes
-  command: kubeadm join 192.168.1.12:6443 --token <token> --discovery-token-ca-cert-hash sha256:<hash>
+  command: >
+    kubeadm join {{ ip_master }}:6443 --token {{ kubeadm_token }} 
+    --discovery-token-ca-cert-hash {{ kubeadm_ca_hash }}
+  when: inventory_hostname in groups['workers']
   become: true
 
+
+# Verificar el estado de los pods.
+- name: Verificar el estado de los pods en el namespace kube-system
+  command: kubectl get pods -n kube-system
+  when: inventory_hostname == "master1

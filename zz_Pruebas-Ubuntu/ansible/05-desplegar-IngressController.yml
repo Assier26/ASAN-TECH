@@ -1,5 +1,4 @@
 ---
 - hosts: wokers
   become: yes
-  tasks:
-    - name: 
+

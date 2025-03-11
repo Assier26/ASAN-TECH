@@ -1,0 +1,49 @@
+#-------------------------------------------------------
+# 1. Desplegar el Nginx Ingress Controller
+#-------------------------------------------------------
+- name: Desplegar Nginx Ingress Controller
+  command: >
+    kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/baremetal/deploy.yaml
+  register: ingress_controller_deploy
+
+
+#-------------------------------------------------------
+# 2. Exponer Nginx Ingress Controller como servicio NodePort
+#-------------------------------------------------------
+- name: Exponer el Ingress Controller en NodePort
+  k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: ingress-nginx-controller
+        namespace: ingress-nginx
+      spec:
+        type: NodePort
+        ports:
+          - port: 80
+            targetPort: 80
+            protocol: TCP
+            name: http
+          - port: 443
+            targetPort: 443
+            protocol: TCP
+            name: https
+        selector:
+          app.kubernetes.io/name: ingress-nginx
+
+#-------------------------------------------------------
+# 3. Permitir tráfico HTTP y HTTPS a través del firewall
+#-------------------------------------------------------
+- name: Allow HTTP and HTTPS ports through firewall
+  ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+  loop:
+    - 80    # HTTP
+    - 443   # HTTPS
+
+
+

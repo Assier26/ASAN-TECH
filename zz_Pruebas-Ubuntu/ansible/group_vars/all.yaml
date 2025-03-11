@@ -1,0 +1,42 @@
+---
+# Arvhico destinao a almacenar las variables
+# Aquí definimos la red por defecto para los pods. 
+pod_network: "10.244.0.0/16"
+ip_master: "{{ hostvars['master1'].ansible_host }}"
+
+# Obtenemos el hash y token mostrado luego de ejecutar kubeadm init
+# Así podemos usarlos para ejecutar el kubeadm join
+kubeadm_token: "{{ kubeadm_token }}"
+kubeadm_ca_hash: "{{ kubeadm_ca_hash }}"
+
+# Variables para desplegar la aplicación web 
+web_app_name: "asan-tech"
+web_app_image: "php:8.2-apache"
+web_app_port: 80
+web_app_ingress_host: "asantech.com"  # Cambia esto por tu dominio
+web_app_path: "./web"  # Ruta al código de la aplicación web
+web_app_name_volume: "volume-asantech"
+
+# Variables para desplegar la base de datos
+db_name: "mi-db"
+db_image: "mariadb:10.11"
+db_root_password: ""
+db_user: "root"
+db_password: ""    
+db_database: "mi_db"
+db_port: 3306
+
+
+# Certificado SSL/TLS
+tls_secret_name: "mi-certificado"  # Nombre del secreto TLS
+cert_file: "/ruta/al/mi-certificado.crt"  # Ruta al archivo del certificado
+key_file: "/ruta/al/mi-clave-privada.key"  # Ruta al archivo de la clave privada
+
+
+
+# Variables para desplegar servicios dinámicos
+service_name: "{{ servicio_elegido }}"  # Variable dinámica (Nextcloud o FacturaScript)
+app_image: "{{ 'nextcloud' if service_name == 'nextcloud' else 'facturascript/facturascript' }}"
+app_port: 80
+ingress_host: "{{ service_name }}.asan-tech.com"
+

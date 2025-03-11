@@ -1,0 +1,214 @@
+#-------------------------------------------------------
+# 1. Desplegar la base de datos MariaDB
+#-------------------------------------------------------
+- name: Crear despliegue para MariaDB
+  k8s:
+    state: present
+    definition:
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: "{{ db_name }}-deployment"
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            app: "{{ db_name }}"
+        template:
+          metadata:
+            labels:
+              app: "{{ db_name }}"
+          spec:
+            containers:
+              - name: "{{ db_name }}"
+                image: "{{ db_image }}"
+                env:
+                  - name: MYSQL_ROOT_PASSWORD
+                    value: "{{ db_root_password }}"
+                  - name: MYSQL_DATABASE
+                    value: "{{ db_database }}"
+                  - name: MYSQL_USER
+                    value: "{{ db_user }}"
+                  - name: MYSQL_PASSWORD
+                    value: "{{ db_password }}"
+                ports:
+                  - containerPort: "{{ db_port }}"
+
+- name: Crear servicio para MariaDB
+  k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: "{{ db_name }}-service"
+      spec:
+        ports:
+          - port: db_port
+            targetPort: db_port
+        selector:
+          app: "{{ db_name }}"
+
+#-------------------------------------------------------
+# 2. Desplegar la aplicación web con PHP y Apache
+#-------------------------------------------------------
+- name: Crear despliegue para la aplicación web
+  k8s:
+    state: present
+    definition:
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: "{{ web_app_name }}-deployment"
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            app: "{{ web_app_name }}"
+        template:
+          metadata:
+            labels:
+              app: "{{ web_app_name }}"
+          spec:
+            containers:
+              - name: "{{ web_app_name }}"
+                image: "{{ web_app_image }}"
+                env:
+                  - name: DB_HOST
+                    value: "{{ db_name }}-service"  # Nombre del servicio de MariaDB
+                  - name: DB_USER
+                    value: "{{ db_user }}"
+                  - name: DB_PASSWORD
+                    value: "{{ db_password }}"
+                  - name: DB_DATABASE
+                    value: "{{ db_database }}"
+                ports:
+                  - containerPort: "{{ web_app_port }}"
+                volumeMounts:
+                  - name: "{{ web_app_name_volumeh }}"
+                    mountPath: /var/www/html
+            volumes:
+              - name: "{{ web_app_name_volume }}"
+                hostPath:
+                  path: "{{ web_app_path }}"  # Cambia esto por la ruta a tu código PHP
+
+- name: Crear servicio para la aplicación web
+  k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: "{{ web_app_name }}-service"
+      spec:
+        ports:
+          - port: "{{ web_app_port }}"
+            targetPort: "{{ web_app_port }}"
+        selector:
+          app: "{{ web_app_name }}"
+
+#-------------------------------------------------------
+# 3. Crear un secreto TLS para el certificado SSL
+#-------------------------------------------------------
+- name: Crear un secreto TLS para el certificado SSL
+  k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: "{{ tls_secret_name }}"
+        namespace: default
+      type: kubernetes.io/tls
+      data:
+        tls.crt: "{{ lookup('file', cert_file) | b64encode }}"
+        tls.key: "{{ lookup('file', key_file) | b64encode }}"
+
+#-------------------------------------------------------
+# 4. Crear un recurso Ingress para la página web
+#-------------------------------------------------------
+- name: Crear recurso Ingress para la página web
+  k8s:
+    state: present
+    definition:
+      apiVersion: networking.k8s.io/v1
+      kind: Ingress
+      metadata:
+        name: "{{ web_app_name }}-ingress"
+        annotations:
+          nginx.ingress.kubernetes.io/ssl-redirect: "true"
+          nginx.ingress.kubernetes.io/rewrite-target: /
+      spec:
+        tls:
+          - hosts:
+              - "{{ web_app_ingress_hostt }}"
+            secretName: "{{ tls_secret_name }}"
+        rules:
+          - host: "{{ web_app_ingress_host }}"
+            http:
+              paths:
+                - path: /
+                  pathType: Prefix
+                  backend:
+                    service:
+                      name: "{{ web_app_name }}-service"
+                      port:
+                        number: 80
+
+#-------------------------------------------------------
+# 5. Verificar el estado de los despliegues y servicios
+#-------------------------------------------------------
+- name: Verificar el estado del despliegue de MariaDB
+  command: kubectl get deployment "{{ db_name }}-deployment"
+  register: db_deployment_status
+  changed_when: false
+
+- name: Mostrar el estado del despliegue de MariaDB
+  debug:
+    msg: "{{ db_deployment_status.stdout }}"
+
+- name: Verificar el estado del servicio de MariaDB
+  command: kubectl get service "{{ db_name }}-service"
+  register: db_service_status
+  changed_when: false
+
+- name: Mostrar el estado del servicio de MariaDB
+  debug:
+    msg: "{{ db_service_status.stdout }}"
+
+- name: Verificar el estado del despliegue de la aplicación web
+  command: kubectl get deployment "{{ web_app_name }}-deployment"
+  register: web_deployment_status
+  changed_when: false
+
+- name: Mostrar el estado del despliegue de la aplicación web
+  debug:
+    msg: "{{ web_deployment_status.stdout }}"
+
+- name: Verificar el estado del servicio de la aplicación web
+  command: kubectl get service "{{ web_app_name }}-service"
+  register: web_service_status
+  changed_when: false
+
+- name: Mostrar el estado del servicio de la aplicación web
+  debug:
+    msg: "{{ web_service_status.stdout }}"
+
+- name: Verificar el estado del secreto TLS
+  command: kubectl get secret "{{ tls_secret_name }}"
+  register: tls_secret_status
+  changed_when: false
+
+- name: Mostrar el estado del secreto TLS
+  debug:
+    msg: "{{ tls_secret_status.stdout }}"
+
+- name: Verificar el estado del Ingress
+  command: kubectl get ingress "{{ web_app_name }}-ingress"
+  register: ingress_status
+  changed_when: false
+
+- name: Mostrar el estado del Ingress
+  debug:
+    msg: "{{ ingress_status.stdout }}"
+
