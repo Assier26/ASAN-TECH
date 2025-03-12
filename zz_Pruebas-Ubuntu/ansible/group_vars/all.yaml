@@ -2,12 +2,7 @@
 # Arvhico destinao a almacenar las variables
 # Aquí definimos la red por defecto para los pods. 
 pod_network: "10.244.0.0/16"
-ip_master: "{{ hostvars['master1'].ansible_host }}"
-
-# Obtenemos el hash y token mostrado luego de ejecutar kubeadm init
-# Así podemos usarlos para ejecutar el kubeadm join
-kubeadm_token: "{{ kubeadm_token }}"
-kubeadm_ca_hash: "{{ kubeadm_ca_hash }}"
+ip_master: "master"
 
 # Variables para desplegar la aplicación web 
 web_app_name: "asan-tech"

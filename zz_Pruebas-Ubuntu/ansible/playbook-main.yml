@@ -19,5 +19,5 @@
 # 6. Desplegar la aplicación (MySQL y página web) en Kubernetes
 - import_playbook: 06-desplegar-web.yml
 
-# 8. Verificar el clúster y los servicios desplegados
+# 7. Verificar el clúster y los servicios desplegados
 - import_playbook: 07-verificar-cluster.yml

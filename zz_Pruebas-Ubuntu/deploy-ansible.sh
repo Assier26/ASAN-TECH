@@ -44,7 +44,7 @@ network:
                 search: 
                 - 8.8.8.8
     version: 2
-EOF 
+EOF
 
 sudo netplan try
 sudo netplan apply
@@ -57,7 +57,7 @@ sudo apt update && sudo apt upgrade -y
 sudo apt install -y software-properties-common gnupg2 curl openssh-server
 curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
 echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
-sudo apt install ansible
+sudo apt install ansible -y
 
 # --- Configuración de permisos ---
 echo "Configurando permisos de los archivos..."
