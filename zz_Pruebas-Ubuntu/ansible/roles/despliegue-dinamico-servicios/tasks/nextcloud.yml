@@ -1,6 +1,6 @@
 ---
 # roles/despliegue-dinamico-servicios/tasks/nextcloud.yml
-
+# Crear despliegue para Nextcloud
 - name: Crear despliegue para Nextcloud
   k8s:
     state: present
@@ -13,25 +13,26 @@
         replicas: 1
         selector:
           matchLabels:
-            app: "nextcloud"
+            app: "{{ nextcloud_selector }}"
         template:
           metadata:
             labels:
-              app: "nextcloud"
+              app: "{{ nextcloud_selector }}"
           spec:
             containers:
               - name: "nextcloud"
                 image: "nextcloud"
                 ports:
-                  - containerPort: 80
+                  - containerPort: "{{ nextcloud_port }}"
                 volumeMounts:
-                  - name: nextcloud-data
+                  - name: "{{ nextcloud_volume }}"
                     mountPath: /var/www/html
             volumes:
-              - name: nextcloud-data
+              - name: "{{ nextcloud_volume }}"
                 persistentVolumeClaim:
-                  claimName: "nextcloud-data-pvc"
+                  claimName: "{{ nextcloud_pvc }}"
 
+# Crear servicio para Nextcloud
 - name: Crear servicio para Nextcloud
   k8s:
     state: present
@@ -42,11 +43,12 @@
         name: "nextcloud-service"
       spec:
         ports:
-          - port: 80
-            targetPort: 80
+          - port: "{{ nextcloud_port }}"
+            targetPort: "{{ nextcloud_port }}"
         selector:
-          app: "nextcloud"
-
+          app: "{{ nextcloud_selector }}"
+          
+# Crear Ingress para Nextcloud
 - name: Crear Ingress para Nextcloud
   k8s:
     state: present
@@ -66,4 +68,4 @@
                     service:
                       name: "nextcloud-service"
                       port:
-                        number: 80
+                        number: "{{ nextcloud_port }}"

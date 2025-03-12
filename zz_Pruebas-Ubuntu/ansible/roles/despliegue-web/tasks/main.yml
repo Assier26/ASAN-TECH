@@ -1,3 +1,17 @@
+# Antes del despliegue hay que pasarle los archivos de la app-web
+
+#-------------------------------------------------------
+# 1. Copiar el código PHP al nodo worker
+#-------------------------------------------------------
+- name: Copiar el código PHP al nodo worker
+  copy:
+    src: /web  # Ruta en el host de Ansible
+    dest: "{{ web_app_path }}"  # Ruta en el nodo worker
+    owner: asan
+    group: asan
+    mode: '0755'
+  delegate_to: worker1  # Asegúrate de que la tarea se ejecute en worker1
+
 #-------------------------------------------------------
 # 1. Desplegar la base de datos MariaDB
 #-------------------------------------------------------
@@ -44,8 +58,8 @@
         name: "{{ db_name }}-service"
       spec:
         ports:
-          - port: db_port
-            targetPort: db_port
+          - port: "{{ db_port }}"
+            targetPort: "{{ db_port }}"
         selector:
           app: "{{ db_name }}"
 
@@ -85,8 +99,8 @@
                 ports:
                   - containerPort: "{{ web_app_port }}"
                 volumeMounts:
-                  - name: "{{ web_app_name_volumeh }}"
-                    mountPath: /var/www/html
+                  - name: "{{ web_app_name_volume }}"
+                    mountPath: /var/www/html # dentro del contenedor
             volumes:
               - name: "{{ web_app_name_volume }}"
                 hostPath:
@@ -153,7 +167,7 @@
                     service:
                       name: "{{ web_app_name }}-service"
                       port:
-                        number: 80
+                        number: "{{ web_app_port }}"
 
 #-------------------------------------------------------
 # 5. Verificar el estado de los despliegues y servicios

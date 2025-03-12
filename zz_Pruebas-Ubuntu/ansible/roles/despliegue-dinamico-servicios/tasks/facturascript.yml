@@ -1,6 +1,12 @@
 ---
 # roles/despliegue-dinamico-servicios/tasks/facturascript.yml
-
+#
+# FacturaScript necesita de dos contenedores para funcionar:
+# - Un contenedor para la base de datos
+# - Un contenedor para la aplicación web
+#
+# --------- Base de datos de FacturaScript ---------
+# Crear despliegue para FacturaScript
 - name: Crear despliegue para la base de datos de FacturaScript
   k8s:
     state: present
@@ -13,34 +19,35 @@
         replicas: 1
         selector:
           matchLabels:
-            app: "facturascript-db"
+            app: "{{ facturascript_db_name }}"
         template:
           metadata:
             labels:
-              app: "facturascript-db"
+              app: "{{ facturascript_db_name }}"
           spec:
             containers:
-              - name: "facturascript-db"
-                image: "mysql:8.0"
+              - name: "{{ facturascript_db_name }}"
+                image: "{{ facturascript_db_image }}"
                 env:
                   - name: MYSQL_ROOT_PASSWORD
-                    value: "mi_contraseña_segura"
+                    value: "{{ facturascript_db_root_password }}"
                   - name: MYSQL_DATABASE
-                    value: "facturascripts"
+                    value: "{{ facturascript_db_database }}"
                   - name: MYSQL_USER
-                    value: "facturascripts"
+                    value: "{{ facturascript_db_user }}"
                   - name: MYSQL_PASSWORD
-                    value: "fs_password"
+                    value: "{{ facturascript_db_password }}"
                 ports:
-                  - containerPort: 3306
+                  - containerPort: "{{ facturascript_db_port }}"
                 volumeMounts:
-                  - name: facturascript-db-data
+                  - name: "{{ facturascript_db_volume }}"
                     mountPath: /var/lib/mysql
             volumes:
-              - name: facturascript-db-data
+              - name: "{{ facturascript_db_volume }}"
                 persistentVolumeClaim:
-                  claimName: "facturascript-db-data-pvc"
+                  claimName: "{{ facturascript_db_pvc }}"
 
+# Crear servicio para la base de datos de FacturaScript
 - name: Crear servicio para la base de datos de FacturaScript
   k8s:
     state: present
@@ -51,11 +58,13 @@
         name: "facturascript-db-service"
       spec:
         ports:
-          - port: 3306
-            targetPort: 3306
+          - port: "{{ facturascript_db_port }}"
+            targetPort: "{{ facturascript_db_port }}"
         selector:
-          app: "facturascript-db"
+          app: "{{ facturascript_db_name }}"
 
+# --------- Contenedor de FacturaScript ---------
+# Crear despliegue para FacturaScript
 - name: Crear despliegue para FacturaScript
   k8s:
     state: present
@@ -68,25 +77,26 @@
         replicas: 1
         selector:
           matchLabels:
-            app: "facturascript"
+            app: "{{ facturascript_app_selector }}"
         template:
           metadata:
             labels:
-              app: "facturascript"
+              app: "{{ facturascript_app_selector }}"
           spec:
             containers:
               - name: "facturascript"
                 image: "facturascripts/facturascripts"
                 ports:
-                  - containerPort: 80
+                  - containerPort: "{{ facturascript_app_port }}"
                 volumeMounts:
-                  - name: facturascript-data
+                  - name: "{{ facturascript_app_volume }}"
                     mountPath: /var/www/html
             volumes:
-              - name: facturascript-data
+              - name: "{{ facturascript_app_volume }}"
                 persistentVolumeClaim:
-                  claimName: "facturascript-data-pvc"
+                  claimName: "{{ facturascript_app_data_pvc }}"
 
+# Crear servicio para el contenedor de FacturaScript
 - name: Crear servicio para FacturaScript
   k8s:
     state: present
@@ -97,11 +107,12 @@
         name: "facturascript-service"
       spec:
         ports:
-          - port: 80
-            targetPort: 80
+          - port: "{{ facturascript_app_port }}"
+            targetPort: "{{ facturascript_app_port }}"
         selector:
-          app: "facturascript"
+          app: "{{ facturascript_app_selector }}"
 
+# Crear Ingress para FacturaScript
 - name: Crear Ingress para FacturaScript
   k8s:
     state: present
@@ -121,4 +132,4 @@
                     service:
                       name: "facturascript-service"
                       port:
-                        number: 80
+                        number: "{{ facturascript_app_port }}"
