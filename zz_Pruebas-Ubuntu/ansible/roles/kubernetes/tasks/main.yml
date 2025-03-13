@@ -1,15 +1,4 @@
-- name: Limpiar caché de apt
-  apt:
-    update_cache: yes
-    cache_valid_time: 0  # Fuerza la actualización del caché
-  become: true
 
-- name: Deshabilitar el servicio unattended-upgrades
-  systemd:
-    name: unattended-upgrades
-    enabled: no  # Deshabilita el servicio
-    state: stopped  # Detiene el servicio si está en ejecución
-  become: true  # Ejecuta la tarea con privilegios de superusuario
 #-------------------------------------------------------
 # 1. dependencias
 #-------------------------------------------------------
@@ -58,3 +47,12 @@
     regexp: '^/swap.img'
     line: '#/swap.img none swap sw 0 0'
     state: present
+
+- name: Crear directorio .kube en el nodo worker1
+  file:
+    path: "{{ home_user_ansible }}/.kube"
+    state: directory
+    mode: '0755'
+    owner: "{{ user_id_ansible }}"
+    group: "{{ user_group_ansible }}"
+

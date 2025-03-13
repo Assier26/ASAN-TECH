@@ -130,6 +130,18 @@
 - name: Habilitat kubelet
   command: systemctl enable --now kubelet
   become: true
+
+- name: Copiar el archivo de configuración de Kubernetes al nodo worker1
+  copy:
+    src: /tmp/admin.conf
+    dest: /home/asan/.kube/config
+    owner: asan
+    group: asan
+    mode: '0600'
+
+
+
+
 #-------------------------------------------------------
 - name: Cargar variables desde el archivo temporal
   include_vars:
@@ -155,7 +167,4 @@
   become: true
 
 
-# Verificar el estado de los pods.
-- name: Verificar el estado de los pods en el namespace kube-system
-  command: kubectl get pods -n kube-system
-  when: inventory_hostname == "master1
+

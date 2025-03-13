@@ -1,3 +1,13 @@
+# Instalar La la biblioteca kubernetes para que le modulo k8s la tenga.
+- name: Instalar la biblioteca kubernetes
+  pip:
+    name: kubernetes
+    executable: pip3
+    extra_args: --break-system-packages
+  become: true
+
+
+
 #-------------------------------------------------------
 # 1. Desplegar el Nginx Ingress Controller
 #-------------------------------------------------------
@@ -5,14 +15,16 @@
   command: >
     kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/baremetal/deploy.yaml
   register: ingress_controller_deploy
-
-
+  environment:
+    KUBECONFIG: /home/asan/.kube/config  # Especifica la ruta al archivo de configuración
+  when: inventory_hostname == "master1"
 #-------------------------------------------------------
 # 2. Exponer Nginx Ingress Controller como servicio NodePort
 #-------------------------------------------------------
 - name: Exponer el Ingress Controller en NodePort
   k8s:
     state: present
+    kubeconfig: /home/asan/.kube/config
     definition:
       apiVersion: v1
       kind: Service
@@ -30,9 +42,13 @@
             targetPort: 443
             protocol: TCP
             name: https
+          - port: 8443
+            targetPort: 8443 
+            name: webhook
+            protocol: TCP
         selector:
           app.kubernetes.io/name: ingress-nginx
-
+    
 #-------------------------------------------------------
 # 3. Permitir tráfico HTTP y HTTPS a través del firewall
 #-------------------------------------------------------
@@ -44,6 +60,3 @@
   loop:
     - 80    # HTTP
     - 443   # HTTPS
-
-
-

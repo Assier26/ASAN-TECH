@@ -1,4 +1,5 @@
 ---
-- hosts: wokers
+- hosts: master
   become: yes
-
+  roles:
+    - ingressController

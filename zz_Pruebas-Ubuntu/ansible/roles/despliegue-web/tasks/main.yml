@@ -1,16 +1,35 @@
 # Antes del despliegue hay que pasarle los archivos de la app-web
-
+# Verificar el estado de los pods.
 #-------------------------------------------------------
 # 1. Copiar el código PHP al nodo worker
 #-------------------------------------------------------
 - name: Copiar el código PHP al nodo worker
   copy:
-    src: /web  # Ruta en el host de Ansible
+    src: "{{ playbook_dir }}/../web"  # Ruta en el host de Ansible
     dest: "{{ web_app_path }}"  # Ruta en el nodo worker
     owner: asan
     group: asan
     mode: '0755'
   delegate_to: worker1  # Asegúrate de que la tarea se ejecute en worker1
+
+# Instalar La la biblioteca kubernetes para que le modulo k8s la tenga.
+- name: Instalar la biblioteca kubernetes
+  pip:
+    name: kubernetes
+    executable: pip3
+    extra_args: --break-system-packages
+  become: true
+
+- name: Crear el namespace para db_web
+  k8s:
+    state: present
+    kubeconfig: /home/asan/.kube/config
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: "{{ db_namespace }}"
+
 
 #-------------------------------------------------------
 # 1. Desplegar la base de datos MariaDB
@@ -18,11 +37,13 @@
 - name: Crear despliegue para MariaDB
   k8s:
     state: present
+    kubeconfig: /home/asan/.kube/config
     definition:
       apiVersion: apps/v1
       kind: Deployment
       metadata:
         name: "{{ db_name }}-deployment"
+        namespace: "{{ db_namespace }}"
       spec:
         replicas: 1
         selector:
@@ -47,15 +68,17 @@
                     value: "{{ db_password }}"
                 ports:
                   - containerPort: "{{ db_port }}"
-
+    
 - name: Crear servicio para MariaDB
   k8s:
     state: present
+    kubeconfig: /home/asan/.kube/config
     definition:
       apiVersion: v1
       kind: Service
       metadata:
         name: "{{ db_name }}-service"
+        namespace: "{{ db_namespace }}"
       spec:
         ports:
           - port: "{{ db_port }}"
@@ -69,11 +92,13 @@
 - name: Crear despliegue para la aplicación web
   k8s:
     state: present
+    kubeconfig: /home/asan/.kube/config
     definition:
       apiVersion: apps/v1
       kind: Deployment
       metadata:
         name: "{{ web_app_name }}-deployment"
+        namespace: "{{ db_namespace }}"
       spec:
         replicas: 1
         selector:
@@ -109,11 +134,13 @@
 - name: Crear servicio para la aplicación web
   k8s:
     state: present
+    kubeconfig: /home/asan/.kube/config
     definition:
       apiVersion: v1
       kind: Service
       metadata:
         name: "{{ web_app_name }}-service"
+        namespace: "{{ db_namespace }}"
       spec:
         ports:
           - port: "{{ web_app_port }}"
@@ -124,19 +151,20 @@
 #-------------------------------------------------------
 # 3. Crear un secreto TLS para el certificado SSL
 #-------------------------------------------------------
-- name: Crear un secreto TLS para el certificado SSL
-  k8s:
-    state: present
-    definition:
-      apiVersion: v1
-      kind: Secret
-      metadata:
-        name: "{{ tls_secret_name }}"
-        namespace: default
-      type: kubernetes.io/tls
-      data:
-        tls.crt: "{{ lookup('file', cert_file) | b64encode }}"
-        tls.key: "{{ lookup('file', key_file) | b64encode }}"
+# - name: Crear un secreto TLS para el certificado SSL
+#   k8s:
+#     state: present
+#     kubeconfig: /home/asan/.kube/config
+#     definition:
+#       apiVersion: v1
+#       kind: Secret
+#       metadata:
+#         name: "{{ tls_secret_name }}"
+#         namespace: "{{ db_namespace }}"
+#       type: kubernetes.io/tls
+#       data:
+#         tls.crt: "{{ lookup('file', cert_file) | b64encode }}"
+#         tls.key: "{{ lookup('file', key_file) | b64encode }}"
 
 #-------------------------------------------------------
 # 4. Crear un recurso Ingress para la página web
@@ -144,18 +172,20 @@
 - name: Crear recurso Ingress para la página web
   k8s:
     state: present
+    kubeconfig: /home/asan/.kube/config
     definition:
       apiVersion: networking.k8s.io/v1
       kind: Ingress
       metadata:
         name: "{{ web_app_name }}-ingress"
+        namespace: "{{ db_namespace }}"
         annotations:
-          nginx.ingress.kubernetes.io/ssl-redirect: "true"
+          #nginx.ingress.kubernetes.io/ssl-redirect: "true"
           nginx.ingress.kubernetes.io/rewrite-target: /
       spec:
         tls:
           - hosts:
-              - "{{ web_app_ingress_hostt }}"
+              - "{{ web_app_ingress_host }}"
             secretName: "{{ tls_secret_name }}"
         rules:
           - host: "{{ web_app_ingress_host }}"

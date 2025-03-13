@@ -1,9 +1,5 @@
 ---
 - hosts: master
   become: yes
-  tasks:
-    - name: Verificar recursos desplegados
-      command: kubectl get all
-      register: kubectl_output
-    - debug:
-        var: kubectl_output.stdout
+  roles:
+    - verificar-pods

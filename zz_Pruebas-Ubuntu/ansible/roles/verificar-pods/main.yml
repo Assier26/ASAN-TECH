@@ -1,0 +1,11 @@
+
+# Verificar el estado de los pods.
+- name: Verificar el estado de los pods en el namespace kube-system
+  command: kubectl get pods -n kube-system
+
+
+- name: Verificar recursos desplegados
+  command: kubectl get all
+  register: kubectl_output
+- debug:
+    var: kubectl_output.stdout

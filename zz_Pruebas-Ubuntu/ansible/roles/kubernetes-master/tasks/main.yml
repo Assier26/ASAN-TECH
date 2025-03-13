@@ -23,6 +23,7 @@
     - 10252 # Controller Manager
     - 10255 # Read-only Kubelet API
     - 5473  # Calico networking
+    - 8080
 
 # Recargar Firewall
 - name: Recargamos el firewall
@@ -80,6 +81,15 @@
   args:
       creates: /etc/containerd/config.toml
 
+- name: Añadir configuración del mirror de Docker
+  blockinfile:
+    path: /etc/containerd/config.toml
+    insertafter: '^\[plugins\."io\.containerd\.grpc\.v1\.cri"\.registry\.mirrors\]'
+    block: |
+      [plugins."io.containerd.grpc.v1.cri".registry.mirrors."docker.io"]
+        endpoint = ["https://mirror.gcr.io"]
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - containerd mirror config"
+
     # 2. plugin CRI
 - name: Configuring Containerd (Setting SystemdCgroup Variable to True)
   replace:
@@ -119,7 +129,6 @@
   command: systemctl enable --now kubelet
   become: true
 
-
 #-------------------------------------------------------
 #-------------------------------------------------------
 # 1. Iniciar el cluster
@@ -129,7 +138,7 @@
   # become: true
 
 - name: Inicializar el clúster de Kubernetes
-  command: kubeadm init --pod-network-cidr={{ pod_network }}
+  command: kubeadm init --apiserver-advertise-address={{ ip_master }} --pod-network-cidr={{ pod_network }}
   args:
     creates: /etc/kubernetes/admin.conf
 
@@ -138,26 +147,32 @@
 #-------------------------------------------------------
 - name: Configurar kubectl para el usuario actual
   block:
-    - name: Crear directorio .kube
-      file:
-        path: "{{ ansible_env.HOME }}/.kube"
-        state: directory
-        mode: '0755'
+    # - name: Crear directorio .kube
+    #   file:
+    #     path: "{{ home_user_ansible }}/.kube"
+    #     state: directory
+    #     mode: '0755'
 
     - name: Copiar el archivo de configuración de Kubernetes
       copy:
         src: /etc/kubernetes/admin.conf
-        dest: "{{ ansible_env.HOME }}/.kube/config"
+        dest: "{{ home_user_ansible }}/.kube/config"
         remote_src: yes
         mode: '0644'
 
     - name: Cambiar el propietario del archivo config
       file:
-        path: "{{ ansible_env.HOME }}/.kube/config"
+        path: "{{ home_user_ansible }}/.kube/config"
         owner: "{{ ansible_user_id }}"
-        group: "{{ ansible_user_gid | default(ansible_user_id) }}"
+        group: "{{ user_group_ansible }}"
         mode: '0644'
       become: yes  # Esto es importante para cambiar el dueño como root
+
+- name: Traer el archivo de configuración desde el nodo master al nodo de control
+  fetch:
+    src: /etc/kubernetes/admin.conf
+    dest: /tmp/admin.conf  # Ruta temporal en el nodo de control
+    flat: yes  # Conservar el nombre del archivo sin incluir la ruta del host
   when: inventory_hostname == "master1"
 
 #-------------------------------------------------------
@@ -166,17 +181,15 @@
 - name: Obtener el comando de unión del worker
   command: kubeadm token create --print-join-command
   register: join_command
-  when: inventory_hostname == "master1"
 
 - name: Extraer el token del comando de unión
   set_fact:
     kubeadm_token: "{{ join_command.stdout | regex_search('--token\\s+(\\S+)', '\\1') | first }}"
-  when: inventory_hostname == "master1"
 
 - name: Extraer el hash del certificado CA del comando de unión
   set_fact:
     kubeadm_ca_hash: "{{ join_command.stdout | regex_search('--discovery-token-ca-cert-hash\\s+(\\S+)', '\\1') | first }}"
-  when: inventory_hostname == "master1"
+
 
 - name: Mostrar el token y el hash generados
   debug:
@@ -210,5 +223,23 @@
 #-------------------------------------------------------
 - name: Desplegar un plugin de red (Calico)
   command: kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
+  environment:
+    KUBECONFIG: /home/asan/.kube/config
   when: inventory_hostname == "master1"
 
+
+- name: Instalar la biblioteca kubernetes
+  pip:
+    name: kubernetes
+    executable: pip3
+    extra_args: --break-system-packages
+  become: true
+
+
+- name: Crear el namespace ingress-nginx
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Namespace
+    name: ingress-nginx
+    state: present
+    kubeconfig: /home/asan/.kube/config
