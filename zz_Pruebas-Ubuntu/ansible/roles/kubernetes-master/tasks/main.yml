@@ -23,8 +23,16 @@
     - 10252 # Controller Manager
     - 10255 # Read-only Kubelet API
     - 5473  # Calico networking
-    - 8080
-
+    - 80    # IngressController
+    - 443   # IngressController
+    - 8443  # IngressController
+- name: Abrir puertos de NodePort en el firewall
+  ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+  loop:
+    - "30000:32767"
 # Recargar Firewall
 - name: Recargamos el firewall
   command: ufw reload
@@ -147,19 +155,12 @@
 #-------------------------------------------------------
 - name: Configurar kubectl para el usuario actual
   block:
-    # - name: Crear directorio .kube
-    #   file:
-    #     path: "{{ home_user_ansible }}/.kube"
-    #     state: directory
-    #     mode: '0755'
-
     - name: Copiar el archivo de configuración de Kubernetes
       copy:
         src: /etc/kubernetes/admin.conf
         dest: "{{ home_user_ansible }}/.kube/config"
         remote_src: yes
         mode: '0644'
-
     - name: Cambiar el propietario del archivo config
       file:
         path: "{{ home_user_ansible }}/.kube/config"
@@ -236,10 +237,11 @@
   become: true
 
 
-- name: Crear el namespace ingress-nginx
-  kubernetes.core.k8s:
-    api_version: v1
-    kind: Namespace
-    name: ingress-nginx
-    state: present
-    kubeconfig: /home/asan/.kube/config
+# - name: Crear el namespace ingress-nginx
+#   kubernetes.core.k8s:
+#     api_version: v1
+#     kind: Namespace
+#     name: ingress-nginx
+#     state: present
+#     kubeconfig: /home/asan/.kube/config
+

@@ -2,7 +2,5 @@
 - name: Desplegar servicio dinámico (Nextcloud o FacturaScript)
   hosts: worker1
   become: yes
-  vars:
-    servicio_elegido: "{{ servicio }}"
   roles:
     - despliegue-dinamico-servicios

@@ -6,20 +6,136 @@
     extra_args: --break-system-packages
   become: true
 
-
-
 #-------------------------------------------------------
 # 1. Desplegar el Nginx Ingress Controller
 #-------------------------------------------------------
-- name: Desplegar Nginx Ingress Controller
-  command: >
-    kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/baremetal/deploy.yaml
-  register: ingress_controller_deploy
-  environment:
-    KUBECONFIG: /home/asan/.kube/config  # Especifica la ruta al archivo de configuración
+# Crear NameSpace
+- name: Creando el namespace para Nginx Ingress Controller
+  k8s:
+    state: present
+    kubeconfig: /home/asan/.kube/config
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: ingress-nginx
   when: inventory_hostname == "master1"
+
+# Crear el Service Account.
+- name: Crear ServiceAccount para Ingress Controller
+  k8s:
+    state: present
+    kubeconfig: /home/asan/.kube/config
+    definition:
+      apiVersion: v1
+      kind: ServiceAccount
+      metadata:
+        name: ingress-nginx
+        namespace: ingress-nginx
+
+# Crear el ClusterRole
+- name: Crear ClusterRole para Ingress Controller
+  k8s:
+    state: present
+    kubeconfig: /home/asan/.kube/config
+    definition:
+      apiVersion: rbac.authorization.k8s.io/v1
+      kind: ClusterRole
+      metadata:
+        name: ingress-nginx
+      rules:
+        - apiGroups: ["networking.k8s.io"]
+          resources: ["ingresses", "ingressclasses"]
+          verbs: ["get", "list", "watch"]
+        - apiGroups: [""]
+          resources: ["services", "endpoints", "secrets"]
+          verbs: ["get", "list", "watch"]
+        - apiGroups: [""]
+          resources: ["pods"]
+          verbs: ["get", "list", "watch"]
+
+# Crear el ClusterRoleBinding
+- name: Crear ClusterRoleBinding para Ingress Controller
+  k8s:
+    state: present
+    kubeconfig: /home/asan/.kube/config
+    definition:
+      apiVersion: rbac.authorization.k8s.io/v1
+      kind: ClusterRoleBinding
+      metadata:
+        name: ingress-nginx
+      roleRef:
+        apiGroup: rbac.authorization.k8s.io
+        kind: ClusterRole
+        name: ingress-nginx
+      subjects:
+        - kind: ServiceAccount
+          name: ingress-nginx
+          namespace: ingress-nginx
+
+# Desplegar IngresssController.
+- name: Desplegar Nginx Ingress Controller
+  k8s:
+    state: present
+    kubeconfig: /home/asan/.kube/config
+    definition:
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: ingress-nginx-controller
+        namespace: ingress-nginx
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            app: ingress-nginx
+        template:
+          metadata:
+            labels:
+              app: ingress-nginx
+          spec:
+            serviceAccountName: ingress-nginx 
+            tolerations:  # Agrega esta sección para tolerar los taints del master
+              - key: "node-role.kubernetes.io/control-plane"
+                operator: "Exists"
+                effect: "NoSchedule"
+            containers:
+              - name: ingress-nginx
+                image: k8s.gcr.io/ingress-nginx/controller:v1.8.2
+                env:
+                  - name: POD_NAME
+                    valueFrom:
+                      fieldRef:
+                        fieldPath: metadata.name
+                  - name: POD_NAMESPACE
+                    valueFrom:
+                      fieldRef:
+                        fieldPath: metadata.namespace
+                ports:
+                  - containerPort: 80
+                  - containerPort: 443
+                  - containerPort: 8443
+  when: inventory_hostname == "master1"
+  
 #-------------------------------------------------------
-# 2. Exponer Nginx Ingress Controller como servicio NodePort
+# 2. Deshabilitar el webhook de validación
+#-------------------------------------------------------
+# - name: Deshabilitar el webhook de validación
+#   k8s:
+#     state: present
+#     kubeconfig: /home/asan/.kube/config
+#     definition:
+#       apiVersion: admissionregistration.k8s.io/v1
+#       kind: ValidatingWebhookConfiguration
+#       metadata:
+#         name: ingress-nginx-admission
+#       webhooks:
+#         - name: validate.nginx.ingress.kubernetes.io
+#           failurePolicy: Ignore  # Cambiar de Fail a Ignore
+#   when: inventory_hostname == "master1"
+
+#-------------------------------------------------------
+# 3. Exponer Nginx Ingress Controller como servicio NodePort
 #-------------------------------------------------------
 - name: Exponer el Ingress Controller en NodePort
   k8s:
@@ -48,15 +164,40 @@
             protocol: TCP
         selector:
           app.kubernetes.io/name: ingress-nginx
-    
+  when: inventory_hostname == "master1"
+
 #-------------------------------------------------------
-# 3. Permitir tráfico HTTP y HTTPS a través del firewall
+# 4. Creando certificados.
 #-------------------------------------------------------
-- name: Allow HTTP and HTTPS ports through firewall
-  ufw:
-    rule: allow
-    port: "{{ item }}"
-    proto: tcp
-  loop:
-    - 80    # HTTP
-    - 443   # HTTPS
+# Crear directorio para los certificados
+- name: Crear directorio para los certificados
+  file:
+    path: "{{ cert_dir }}"
+    state: directory
+    mode: '0755'
+
+# Generar certificado wildcard autofirmado
+- name: Generar certificado wildcard autofirmado
+  command: >
+    openssl req -x509 -nodes -days 365 -newkey rsa:2048
+    -keyout {{ cert_dir }}/{{ cert_name }}.key
+    -out {{ cert_dir }}/{{ cert_name }}.crt
+    -subj "/CN={{ domain }}"
+  args:
+    creates: "{{ cert_dir }}/{{ cert_name }}.crt"  # No regenerar si ya existe
+
+
+- name: Copiando wildcard-asantech.crt desde master1 al nodo de control
+  fetch:
+    src: /tmp/certs/wildcard-asantech.crt
+    dest: /tmp/certs/wildcard-asantech.crt
+    flat: yes  # Evita la creación de una estructura de directorios adicional
+    delegate_to: master1
+
+- name: Copiando  wildcard-asantech.key desde master1 al nodo de control
+  fetch:
+    src: /tmp/certs/wildcard-asantech.key
+    dest: /tmp/certs/wildcard-asantech.key
+    flat: yes  # Evita la creación de una estructura de directorios adicional
+    delegate_to: master1
+

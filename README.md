@@ -106,7 +106,6 @@ main:
 -----------------------------------------------------
     --- RESUMEN GENERAL ---
     - 1. Preconfiguración: Configura los hosts (usuarios, SSH, swap, etc.).
-    - 2. Instalación de Docker: Instala Docker en todos los nodos.
     - 3. Instalación de Kubernetes: Instala Kubernetes en el Master y los Workers.
     - 4. Inicialización del clúster: Inicializa Kubernetes en el Master y une los Workers.
     - 5. Despliegue de servicios: Despliega MySQL y la página web en Kubernetes.
@@ -517,3 +516,141 @@ Integración Completa
 
 
 
+
+# Comandos útiles de kubernetes
+# Ver los pods de todos los namespace
+kubectl get pods --all-namespaces
+--------------------------
+NAMESPACE       NAME                                        READY   STATUS    RESTARTS   AGE
+asantech        asan-tech-deployment-765456958d-nvx9k       1/1     Running   0          110s
+asantech        mi-db-deployment-5759df87c9-6d8hn           1/1     Running   0          111s
+ingress-nginx   ingress-nginx-controller-6844bf55c7-qd54x   1/1     Running   0          2m20s
+kube-system     calico-kube-controllers-7498b9bb4c-zkhc6    1/1     Running   0          3m5s
+kube-system     calico-node-m8wjw                           0/1     Running   0          3m5s
+kube-system     calico-node-ws9nn                           0/1     Running   0          2m25s
+kube-system     coredns-668d6bf9bc-mvrjv                    1/1     Running   0          3m5s
+kube-system     coredns-668d6bf9bc-tg4j7                    1/1     Running   0          3m5s
+kube-system     etcd-master1                                1/1     Running   0          3m12s
+kube-system     kube-apiserver-master1                      1/1     Running   0          3m13s
+kube-system     kube-controller-manager-master1             1/1     Running   0          3m12s
+kube-system     kube-proxy-5ntw8                            1/1     Running   0          2m25s
+kube-system     kube-proxy-g66qb                            1/1     Running   0          3m5s
+kube-system     kube-scheduler-master1                      1/1     Running   0          3m12s
+--------------------------
+# Ver los pods de ingresss
+kubectl get pods -n ingress-nginx
+
+# Ver la información del pod.
+kubectl get svc
+kubectl get svc -n ingress-nginx
+# PAra ver el log de un pod 
+kubectl logs -n ingress-nginx ingress-nginx-controller-
+
+# Obtener la ip de los nodos
+kubectl get nodes -o wide
+---------------------------
+NAME      STATUS   ROLES           AGE     VERSION   INTERNAL-IP    EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION     CONTAINER-RUNTIME
+master1   Ready    control-plane   7m17s   v1.32.3   192.168.1.12   <none>        Ubuntu 24.04.2 LTS   6.8.0-55-generic   containerd://1.7.24
+worker1   Ready    <none>          6m28s   v1.32.3   192.168.1.13   <none>        Ubuntu 24.04.2 LTS   6.8.0-55-generic   containerd://1.7.24
+---------------------------
+
+# Ver puertos expuestos
+kubectl get svc -n ingress-nginx
+---------------------------
+NAME                       TYPE       CLUSTER-IP       EXTERNAL-IP   PORT(S)                                     AGE
+ingress-nginx-controller   NodePort   10.103.142.247   <none>        80:32162/TCP,443:32706/TCP,8443:31155/TCP   7m1s
+--------------------------------
+
+# Ver la información de asantech
+kubectl get ingress -n asantech
+--------------------------------
+asan@master1:~$ kubectl get ingress -n asantech
+NAME                CLASS   HOSTS               ADDRESS   PORTS     AGE
+asan-tech-ingress   nginx   home.asantech.com             80, 443   2m11s
+-------------------------------
+kubectl get ingress -n asantech -o yaml
+-------------------------------
+apiVersion: v1
+items:
+- apiVersion: networking.k8s.io/v1
+  kind: Ingress
+  metadata:
+    annotations:
+      nginx.ingress.kubernetes.io/rewrite-target: /
+    creationTimestamp: "2025-03-14T23:53:26Z"
+    generation: 1
+    name: asan-tech-ingress
+    namespace: asantech
+    resourceVersion: "790"
+    uid: 7097541c-2ee5-4767-b1ba-ca3de5d5ba16
+  spec:
+    ingressClassName: nginx
+    rules:
+    - host: home.asantech.com
+      http:
+        paths:
+        - backend:
+            service:
+              name: asan-tech-service
+              port:
+                number: 80
+          path: /
+          pathType: Prefix
+    tls:
+    - hosts:
+      - home.asantech.com
+      secretName: wildcard-asantech
+  status:
+    loadBalancer: {}
+kind: List
+metadata:
+  resourceVersion: ""
+
+-------------------------------
+kubectl describe clusterrole ingress-nginx
+
+
+
+
+# Comprobar el secret
+kubectl get secret -n asantech
+
+# Verificar el contenido del secret
+kubectl describe secret wildcard-asantech -n asantech
+
+# a. Obtener el certificado (tls.crt):
+kubectl get secret wildcard-asantech -n asantech -o jsonpath="{.data.tls\.crt}" | base64 --decode
+
+# b. Obtener la clave privada (tls.key):
+kubectl get secret wildcard-asantech -n asantech -o jsonpath="{.data.tls\.key}" | base64 --decode
+
+# Verificar que el certificado sea valido
+kubectl get secret wildcard-asantech -n asantech -o jsonpath="{.data.tls\.crt}" | base64 --decode | openssl x509 -noout -text
+
+# Verificar que la clave sea valido
+
+kubectl get secret wildcard-asantech -n asantech -o jsonpath="{.data.tls\.key}" | base64 --decode | openssl rsa -check
+
+
+
+# Acceder al servicio
+http://<IP-del-nodo>:<puerto-http>
+http://192.168.1.12:32162
+
+
+sudo ufw status
+netstat -tuln
+
+
+kubectl describe clusterrolebinding ingress-nginx
+asan@master1:~$ kubectl describe clusterrolebinding ingress-nginx
+Name:         ingress-nginx
+Labels:       <none>
+Annotations:  <none>
+Role:
+  Kind:  ClusterRole
+  Name:  ingress-nginx
+Subjects:
+  Kind            Name           Namespace
+  ----            ----           ---------
+  ServiceAccount  ingress-nginx  ingress-nginx

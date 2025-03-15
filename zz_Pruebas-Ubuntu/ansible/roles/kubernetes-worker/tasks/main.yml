@@ -18,6 +18,8 @@
     - 10250 # Kubelet API
     - 10255 # Read-only Kubelet API (opcional)
     - 5473  # Calico networking
+    - 80
+    - 443
 
 # Abrir el rango de puertos 30000-32767 en los workers
 # - name: Abrir rango de puertos NodePort en los workers
@@ -27,13 +29,13 @@
 #     done
 #   when: inventory_hostname in groups['workers']
 
-- name: Cerrar puertos de NodePort en el firewall
+- name: Abrir puertos de NodePort en el firewall
   ufw:
     rule: allow
     port: "{{ item }}"
     proto: tcp
   loop:
-    - "30000:30030" 
+    - "30000:32767" 
 
 
 # Recargar Firewall
@@ -134,13 +136,10 @@
 - name: Copiar el archivo de configuración de Kubernetes al nodo worker1
   copy:
     src: /tmp/admin.conf
-    dest: /home/asan/.kube/config
-    owner: asan
-    group: asan
+    dest: "{{ home_user_ansible }}/.kube/config"
+    owner: "{{ ansible_user_id }}"
+    group: "{{ user_group_ansible }}"
     mode: '0600'
-
-
-
 
 #-------------------------------------------------------
 - name: Cargar variables desde el archivo temporal
@@ -148,13 +147,11 @@
     file: /tmp/kubeadm_join_vars.yml
     name: kubeadm_vars
 
-
 - name: Mostrar las variables cargadas
   debug:
     msg: >
       Token: {{ kubeadm_vars.kubeadm_token }}
       Hash: {{ kubeadm_vars.kubeadm_ca_hash }}
-
 
 #-------------------------------------------------------
 # 1. Unirse al clúster usando kubeadm join
@@ -166,5 +163,10 @@
   when: inventory_hostname in groups['workers']
   become: true
 
-
-
+# Certificados TLS
+- name: Crear directorio /tmp/certs en worker1
+  file:
+    path: /tmp/certs
+    state: directory
+    mode: '0755'  # Permisos del directorio (opcional)
+  delegate_to: worker1

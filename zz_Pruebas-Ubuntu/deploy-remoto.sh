@@ -7,7 +7,7 @@
 #
 # ----  Configuración básica ----
 # Hostname
-echo "master" > /etc/hostname
+echo "master1" > /etc/hostname
 #sudo hostnamectl set-hostname ansible
 
 # DNS /etc/hosts
