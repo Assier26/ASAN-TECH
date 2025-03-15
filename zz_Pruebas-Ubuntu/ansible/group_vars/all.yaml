@@ -6,6 +6,10 @@ pod_network: "10.244.0.0/16" #{{ pod_network }}"
 ip_master: "192.168.1.12" #{{ ip_master }}"
 namespace_asantech: "asantech" # "{{ namespace_asantech }}"
 
+
+server_name: "asantech.com" #{{ server_name }}"
+document_root: "/var/www/html" #{{ document_root }}"
+
 # ---  Variables para desplegar la aplicación web   --- 
 web_app_name: "asan-tech" #{{ web_app_name }}"
 web_app_image: "php:8.2-apache" #{{ web_app_image }}"

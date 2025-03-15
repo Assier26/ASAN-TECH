@@ -118,23 +118,6 @@
   when: inventory_hostname == "master1"
   
 #-------------------------------------------------------
-# 2. Deshabilitar el webhook de validación
-#-------------------------------------------------------
-# - name: Deshabilitar el webhook de validación
-#   k8s:
-#     state: present
-#     kubeconfig: /home/asan/.kube/config
-#     definition:
-#       apiVersion: admissionregistration.k8s.io/v1
-#       kind: ValidatingWebhookConfiguration
-#       metadata:
-#         name: ingress-nginx-admission
-#       webhooks:
-#         - name: validate.nginx.ingress.kubernetes.io
-#           failurePolicy: Ignore  # Cambiar de Fail a Ignore
-#   when: inventory_hostname == "master1"
-
-#-------------------------------------------------------
 # 3. Exponer Nginx Ingress Controller como servicio NodePort
 #-------------------------------------------------------
 - name: Exponer el Ingress Controller en NodePort
@@ -150,20 +133,23 @@
       spec:
         type: NodePort
         ports:
-          - port: 80
+          - name: http
+            port: 80
             targetPort: 80
+            nodePort: 30080  # 🔹 Especifica el NodePort para HTTP
             protocol: TCP
-            name: http
-          - port: 443
+          - name: https
+            port: 443
             targetPort: 443
+            nodePort: 30081  # 🔹 Especifica el NodePort para HTTPS
             protocol: TCP
-            name: https
-          - port: 8443
+          - name: webhook
+            port: 8443
             targetPort: 8443 
-            name: webhook
+            nodePort: 30082  # 🔹 Especifica el NodePort para Webhook
             protocol: TCP
         selector:
-          app.kubernetes.io/name: ingress-nginx
+          app: ingress-nginx
   when: inventory_hostname == "master1"
 
 #-------------------------------------------------------
