@@ -607,11 +607,6 @@ metadata:
   resourceVersion: ""
 
 -------------------------------
-kubectl describe clusterrole ingress-nginx
-
-
-
-
 # Comprobar el secret
 kubectl get secret -n asantech
 
@@ -628,7 +623,6 @@ kubectl get secret wildcard-asantech -n asantech -o jsonpath="{.data.tls\.key}" 
 kubectl get secret wildcard-asantech -n asantech -o jsonpath="{.data.tls\.crt}" | base64 --decode | openssl x509 -noout -text
 
 # Verificar que la clave sea valido
-
 kubectl get secret wildcard-asantech -n asantech -o jsonpath="{.data.tls\.key}" | base64 --decode | openssl rsa -check
 
 
@@ -636,21 +630,3 @@ kubectl get secret wildcard-asantech -n asantech -o jsonpath="{.data.tls\.key}" 
 # Acceder al servicio
 http://<IP-del-nodo>:<puerto-http>
 http://192.168.1.12:32162
-
-
-sudo ufw status
-netstat -tuln
-
-
-kubectl describe clusterrolebinding ingress-nginx
-asan@master1:~$ kubectl describe clusterrolebinding ingress-nginx
-Name:         ingress-nginx
-Labels:       <none>
-Annotations:  <none>
-Role:
-  Kind:  ClusterRole
-  Name:  ingress-nginx
-Subjects:
-  Kind            Name           Namespace
-  ----            ----           ---------
-  ServiceAccount  ingress-nginx  ingress-nginx
