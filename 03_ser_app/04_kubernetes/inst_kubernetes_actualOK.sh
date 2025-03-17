@@ -92,6 +92,28 @@ EOF
 # Añadimos el repositorio de Docker
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/docker-archive-keyring.gpg
 sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+
+sudo add-apt-repository "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+# Clave GPG de Docker
+- name: Descargar Clave GPG de Docker
+  shell: curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo tee /usr/share/keyrings/docker-archive-keyring.gpg > /dev/null
+  become: true
+
+# Repositorio de Docker
+- name: Añadir Repositorio de Docker
+  apt_repository:
+    repo: "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+    state: present
+
+# Actualizar los Repositorios
+- name: Actualizar los Repositorios
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+
+
+
 # Actualizamos e instalamos containerd.io
 sudo apt update
 sudo apt install -y containerd.io

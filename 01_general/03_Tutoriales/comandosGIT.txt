@@ -8,6 +8,18 @@ git config --global user.name "..."
 # Comprobamos los cambios
 git config --list
 # -----------------------------------------------------------------------
+# --    Crear un Repositorio nuevo
+# Primero tenemos que crearlo en GitHub, después nos situamos desde la 
+# terminal en el directorio que queramos convertir en repositorio.
+echo "# Proyecto_IoT" >> README.md
+git init
+git add README.md
+git commit -m "first commit"
+git branch -M main
+git remote add origin https://github.com/AndresSierra-Oficial/Proyecto_IoT.git
+git push -u origin main
+# -----------------------------------------------------------------------
+# -----------------------------------------------------------------------
 # -- Crear tu rama
     # -- 1. Actualizar la información de las ramas remotas:
     git fetch
@@ -50,16 +62,6 @@ git config --list
     # -- 7. Enviar los cambios al repositorio remoto:
     git push origin main
 # -----------------------------------------------------------------------
-
-
-
-
-# --    Inicilalizar un Directorio
-git init
-# --    Añadir un archivo
-git add $archivo.txt
-# Confirmar cambios
-git commit -m "Mensaje de referencia"
 
 # --    Comprobar diferencias entre lo viejo y lo modificado
 git diff

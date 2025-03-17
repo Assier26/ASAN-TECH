@@ -70,9 +70,9 @@ sudo kubeadm config images pull
 #IP_OF_THE_MACHINE k8scp
 
 # 6. Inicializar el cluster
-sudo kubeadm init --pod-network-cidr=172.24.0.0/16 --cri-socket=unix:///run/containerd/containerd.sock --upload-certs --control-plane-endpoint=k8scp
+sudo kubeadm init --pod-networ
 
-# HAver un copa del archivo de seguridad, evitar root
+k-cidr=172.24.0.0/16 --cri-socket=unix:///run/containerd/containerd.sock --upload-certs --control-plane-endpoint=master1
 mkdir -p $HOME/.kube
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config

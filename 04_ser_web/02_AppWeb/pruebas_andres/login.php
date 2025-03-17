@@ -1,17 +1,34 @@
 <?php
-// 
-// session_set_cookie_params([
-//     'httponly' => true,
-//     'secure' => isset($_SERVER['HTTPS']), // Solo en HTTPS
-//     'samesite' => 'Strict'
-// ]);
-
 session_start(); // Inicia la sesión para manejar usuarios logueados
 include('conexion.php'); // Conexión a la base de datos
 
-// Límite de intentos de inicio de sesión
-// $limite_intentos = 5;
-// $bloqueo_minutos = 15;
+
+/* - Límite de intentos de inicio de sesión
+$limite_intentos = 5;
+$bloqueo_minutos = 15;
+*/
+/* - INYECCIÓN SQL
+// Conectar a la BBDD
+$sql = "INSERT INTO comentario(parent_comentario_id,comment,comment_sender_name,date) VALUES ( 11, 'es un comentario', 'maria','" . $date . "')";
+
+// Seguridad para evitar inyecciones SQL
+$sqlSeguro = $mysqli->real_escape_string($sql);
+
+    // Ejecutar la consulta
+    if ($mysqli->query($sqlSeguro) === TRUE) {
+        echo "Registro insertado correctamente.";
+    } else {
+        echo "Error al insertar el registro: " . $mysqli->error;
+    }
+
+
+*/
+
+
+
+
+
+
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // Obtiene y limpia los datos enviados por el formulario

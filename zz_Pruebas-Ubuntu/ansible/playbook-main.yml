@@ -1,0 +1,24 @@
+---
+# Playbook principal para desplegar el proyecto
+
+# 1. Configuraciones comunes a todos los nodos
+- import_playbook: 01-configuraciones-comunes.yml
+
+# 2. Instalar Kubernetes en todos los nodos
+- import_playbook: 02-instalar-kubernetes.yml
+
+# 3. Configurar el nodo Master de Kubernetes
+- import_playbook: 03-configurar-master.yml
+
+# 4. Configurar los nodos Workers de Kubernetes
+- import_playbook: 04-configurar-workers.yml
+
+# 5. Desplegar la aplicación (MySQL y página web) en Kubernetes-master
+- import_playbook: 05-desplegar-IngressController.yml
+
+# 7. Verificar el clúster y los servicios desplegados
+- import_playbook: 07-verificar-cluster.yml
+
+# 6. Desplegar la aplicación (MySQL y página web) en Kubernetes
+- import_playbook: 06-desplegar-web.yml
+
