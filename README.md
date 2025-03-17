@@ -276,13 +276,88 @@ kubectl get svc -n ingress-nginx
 kubectl get ingress -n asantech
 -------------------------------
 kubectl get ingress -n asantech -o yaml
---------------------------
+-------------------------------
+apiVersion: v1
+items:
+- apiVersion: networking.k8s.io/v1
+  kind: Ingress
+  metadata:
+    annotations:
+      nginx.ingress.kubernetes.io/rewrite-target: /
+    creationTimestamp: "2025-03-14T23:53:26Z"
+    generation: 1
+    name: asan-tech-ingress
+    namespace: asantech
+    resourceVersion: "790"
+    uid: 7097541c-2ee5-4767-b1ba-ca3de5d5ba16
+  spec:
+    ingressClassName: nginx
+    rules:
+    - host: home.asantech.com
+      http:
+        paths:
+        - backend:
+            service:
+              name: asan-tech-service
+              port:
+                number: 80
+          path: /
+          pathType: Prefix
+    tls:
+    - hosts:
+      - home.asantech.com
+      secretName: wildcard-asantech
+  status:
+    loadBalancer: {}
+kind: List
+metadata:
+  resourceVersion: ""
+
+-------------------------------
+kubectl describe clusterrole ingress-nginx
+
+
+
+
+# Comprobar el secret
+kubectl get secret -n asantech
+
+# Verificar el contenido del secret
+kubectl describe secret wildcard-asantech -n asantech
+
+# a. Obtener el certificado (tls.crt):
+kubectl get secret wildcard-asantech -n asantech -o jsonpath="{.data.tls\.crt}" | base64 --decode
+
+# b. Obtener la clave privada (tls.key):
+kubectl get secret wildcard-asantech -n asantech -o jsonpath="{.data.tls\.key}" | base64 --decode
+
+# Verificar que el certificado sea valido
+kubectl get secret wildcard-asantech -n asantech -o jsonpath="{.data.tls\.crt}" | base64 --decode | openssl x509 -noout -text
+
+# Verificar que la clave sea valido
+
+kubectl get secret wildcard-asantech -n asantech -o jsonpath="{.data.tls\.key}" | base64 --decode | openssl rsa -check
+
+
+
 # Acceder al servicio
 http://<IP-del-nodo>:<puerto-http>
-http://192.168.1.13:30007
---------------------------
+http://192.168.1.12:32162
+
+
 sudo ufw status
 netstat -tuln
 
-------------------------------------------------------------------
-**&copy; 2025 [Asier García & Andrés Sierra]**
+
+kubectl describe clusterrolebinding ingress-nginx
+asan@master1:~$ kubectl describe clusterrolebinding ingress-nginx
+Name:         ingress-nginx
+Labels:       <none>
+Annotations:  <none>
+Role:
+  Kind:  ClusterRole
+  Name:  ingress-nginx
+Subjects:
+  Kind            Name           Namespace
+  ----            ----           ---------
+  ServiceAccount  ingress-nginx  ingress-nginx
