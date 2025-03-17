@@ -7,40 +7,17 @@
 La idea de proyecto es crear una estructura automatizada que levanta automáticamente los servicios necesarios a través 
 de tecnologías como Ansible y Kubernetes.
 
-
 ## Diagrama de Red 
 ![diagrama de red](https://github.com/Assier26/ASAN-TECH/blob/main/01_general/Topologia/topologia_packet_tracer.jpeg?raw=true)
 
-
 ## TECNOLOGÍAS
-1. WEB: html5, css, php, sql / apache2, nginx / phpMyAdmin
-2. APP: docker, kubernetes, terraform, ansible
+1. WEB: html5, css, php, sql / apache2
+2. APP: kubernetes, ansible
 3. Sistemas: Linux Server 24 / pfsense
-4. Protocolos utilizados:  https, ssh, ftp,
-5. Otros: python.
-6. Software a implementar: Nextcloud, FacturaScript, Wordpress, 
+4. Protocolos utilizados:  https, ssh
+6. Software a implementar: Nextcloud, FacturaScript
 
-## TAREAS GENERALES
-
-
-
-
-
-
-
-
-
-
-
-
-
------------------------------------------------------
-    --- Pasos a seguir para desplegar el Proyecto de Ansible ASAN-TECH  --
-    *** Este proyecto está realizado para que el host master de kubernetes 
-    aloje la página web y la base de datos.
-
------------------------------------------------------
-    --- Estructura del Proyecto ---
+## Estructura del Proyecto
 -----------------------------------------------------
 /proyecto
 │
@@ -71,23 +48,15 @@ de tecnologías como Ansible y Kubernetes.
 │
 └── database/
 |    └── init.sql
-├── servicios/
-│   ├── Nextcloud
-│   ├── FacturaScript
-│   ├── OnlyOffice
-│   └── Roundcube
 -----------------------------------------------------
-    --- RESUMEN GENERAL ---
+##    --- RESUMEN GENERAL ---
     - 1. Preconfiguración: Configura los hosts (usuarios, SSH, swap, etc.).
     - 3. Instalación de Kubernetes: Instala Kubernetes en el Master y los Workers.
     - 4. Inicialización del clúster: Inicializa Kubernetes en el Master y une los Workers.
     - 5. Despliegue de servicios: Despliega MySQL y la página web en Kubernetes.
     - 6. Verificación: Verifica que todo esté funcionando correctamente.
 -------------------------------------------------------------------------
-
-    --- Despliegue del Proyecto ---
-
-    ----------------------
+##    --- Despliegue del Proyecto ---
 1. Tareas de Configuración Previa. (Más abajo)
     ----------------------
 2. Ejecutar el playbook de despliegue desde /mnt/carp_com/ASAN_TECH/zz_Pruebas-Ubuntu
@@ -228,7 +197,8 @@ cd /mnt/carp_com/ASAN-TECH/zz02_Pruebas-Ubuntu/
 # 7. Iniciar el cluster
 # 8. configurar kubectl para el usuario actual
 # 9. desplegar plugin de red.
------------ Flujo General de la aplicación  ----------
+
+# ---------- Flujo General de la aplicación  ----------
 1. Usuario contrata un servicio:
     - El usuario accede a la aplicación web (Asan-tech)
     - En la web, elige un servicio (por ejemplo, Nextcloud o FacturaScript) y hace clic en "Contratar".
@@ -240,7 +210,7 @@ cd /mnt/carp_com/ASAN-TECH/zz02_Pruebas-Ubuntu/
     - El servicio se expone a través de un nuevo Ingress (por ejemplo, nextcloud.asan-tech.com o facturascript.asan-tech.com).
 4. Usuario accede al servicio:
     - Una vez desplegado, el usuario puede acceder al servicio a través del dominio correspondiente.
------------ Integración Completa  ----------
+# ----------- Integración Completa  ----------
 1. El usuario accede a asan-tech.com:
  - El Ingress redirige el tráfico a la aplicación web.
 2. El usuario contrata un servicio:
@@ -252,112 +222,3 @@ cd /mnt/carp_com/ASAN-TECH/zz02_Pruebas-Ubuntu/
 5. El usuario accede al servicio:
 - El servicio está disponible en nextcloud.asan-tech.com o facturascript.asan-tech.com.
 -------------------------------------------------------
-# Comandos útiles de kubernetes
-# Ver los pods de todos los namespace
-kubectl get pods --all-namespaces
---------------------------
-# Ver los pods de ingresss
-kubectl get pods -n ingress-nginx
---------------------------
-# Ver la información del pod.
-kubectl get svc
-kubectl get svc -n ingress-nginx
---------------------------
-# PAra ver el log de un pod 
-kubectl logs -n ingress-nginx ingress-nginx-controller-
---------------------------
-# Obtener la ip de los nodos
-kubectl get nodes -o wide
----------------------------
-# Ver puertos expuestos
-kubectl get svc -n ingress-nginx
---------------------------------
-# Ver la información de asantech
-kubectl get ingress -n asantech
--------------------------------
-kubectl get ingress -n asantech -o yaml
--------------------------------
-apiVersion: v1
-items:
-- apiVersion: networking.k8s.io/v1
-  kind: Ingress
-  metadata:
-    annotations:
-      nginx.ingress.kubernetes.io/rewrite-target: /
-    creationTimestamp: "2025-03-14T23:53:26Z"
-    generation: 1
-    name: asan-tech-ingress
-    namespace: asantech
-    resourceVersion: "790"
-    uid: 7097541c-2ee5-4767-b1ba-ca3de5d5ba16
-  spec:
-    ingressClassName: nginx
-    rules:
-    - host: home.asantech.com
-      http:
-        paths:
-        - backend:
-            service:
-              name: asan-tech-service
-              port:
-                number: 80
-          path: /
-          pathType: Prefix
-    tls:
-    - hosts:
-      - home.asantech.com
-      secretName: wildcard-asantech
-  status:
-    loadBalancer: {}
-kind: List
-metadata:
-  resourceVersion: ""
-
--------------------------------
-kubectl describe clusterrole ingress-nginx
-
-
-
-
-# Comprobar el secret
-kubectl get secret -n asantech
-
-# Verificar el contenido del secret
-kubectl describe secret wildcard-asantech -n asantech
-
-# a. Obtener el certificado (tls.crt):
-kubectl get secret wildcard-asantech -n asantech -o jsonpath="{.data.tls\.crt}" | base64 --decode
-
-# b. Obtener la clave privada (tls.key):
-kubectl get secret wildcard-asantech -n asantech -o jsonpath="{.data.tls\.key}" | base64 --decode
-
-# Verificar que el certificado sea valido
-kubectl get secret wildcard-asantech -n asantech -o jsonpath="{.data.tls\.crt}" | base64 --decode | openssl x509 -noout -text
-
-# Verificar que la clave sea valido
-
-kubectl get secret wildcard-asantech -n asantech -o jsonpath="{.data.tls\.key}" | base64 --decode | openssl rsa -check
-
-
-
-# Acceder al servicio
-http://<IP-del-nodo>:<puerto-http>
-http://192.168.1.12:32162
-
-
-sudo ufw status
-netstat -tuln
-
-
-kubectl describe clusterrolebinding ingress-nginx
-asan@master1:~$ kubectl describe clusterrolebinding ingress-nginx
-Name:         ingress-nginx
-Labels:       <none>
-Annotations:  <none>
-Role:
-  Kind:  ClusterRole
-  Name:  ingress-nginx
-Subjects:
-  Kind            Name           Namespace
-  ----            ----           ---------
-  ServiceAccount  ingress-nginx  ingress-nginx
