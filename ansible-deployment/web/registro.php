@@ -64,7 +64,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <label>Selecciona los servicios:</label><br>
         <input type="checkbox" name="servicios[]" value="Nextcloud"> Nextcloud<br>
         <input type="checkbox" name="servicios[]" value="WordPress"> WordPress<br>
-        <!-- Puedes agregar más servicios aquí -->
         <br>
 
         <input type="submit" value="Registrarse">

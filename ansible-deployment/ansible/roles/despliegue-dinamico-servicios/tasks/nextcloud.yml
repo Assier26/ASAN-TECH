@@ -42,30 +42,12 @@
       metadata:
         name: "nextcloud-service"
       spec:
-        ports:
-          - port: "{{ nextcloud_port }}"
-            targetPort: "{{ nextcloud_port }}"
-        selector:
-          app: "{{ nextcloud_selector }}"
+      type: NodePort
+      ports:
+        - protocol: TCP
+        - port: "{{ nextcloud_port }}"
+          targetPort: "{{ nextcloud_port }}"
+          nodePort: "{{ nextcloud_nodeport }}"
+      selector:
+        app: "{{ nextcloud_selector }}"
           
-# Crear Ingress para Nextcloud
-- name: Crear Ingress para Nextcloud
-  k8s:
-    state: present
-    definition:
-      apiVersion: networking.k8s.io/v1
-      kind: Ingress
-      metadata:
-        name: "nextcloud-ingress"
-      spec:
-        rules:
-          - host: "nextcloud.asan-tech.com"
-            http:
-              paths:
-                - path: /
-                  pathType: Prefix
-                  backend:
-                    service:
-                      name: "nextcloud-service"
-                      port:
-                        number: "{{ nextcloud_port }}"

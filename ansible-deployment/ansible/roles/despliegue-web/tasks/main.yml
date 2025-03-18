@@ -295,7 +295,7 @@
           - protocol: TCP
             port: "{{ web_app_port }}"
             targetPort: "{{ web_app_port }}"
-            nodePort: 30007
+            nodePort: "{{ web_app_nodeport }}"
         selector:
           app: "{{ web_app_name }}"
 

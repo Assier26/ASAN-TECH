@@ -57,9 +57,12 @@
       metadata:
         name: "facturascript-db-service"
       spec:
+        type: NodePort
         ports:
-          - port: "{{ facturascript_db_port }}"
+          - protocol: TCP
+            port: "{{ facturascript_db_port }}"
             targetPort: "{{ facturascript_db_port }}"
+            nodePort: "{{ facturascriptb_app_nodeport }}"
         selector:
           app: "{{ facturascript_db_name }}"
 

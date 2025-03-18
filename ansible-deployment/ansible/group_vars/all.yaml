@@ -14,6 +14,7 @@ document_root: "/var/www/html" #{{ document_root }}"
 web_app_name: "asan-tech" #{{ web_app_name }}"
 web_app_image: "php:8.2-apache" #{{ web_app_image }}"
 web_app_port: 80 #"{{ web_app_port }}"
+web_app_nodeport: 30007 # "{{ web_app_nodeport }}"
 web_app_ingress_host: "home.asantech.com"  #"{ web_app_ingress_host }}" # Cambia esto por tu dominio
 web_app_path: "/var/www/html"  #{{ web_app_path }}" # Ruta al código de la aplicación web
 web_app_name_volume: "volume-asantech" #{{ web_app_name_volume }}"
@@ -52,12 +53,14 @@ facturascript_db_volume: "facturascript-db-data" # "{{ facturascript_db_volume }
 facturascript_db_pvc: "facturascript-db-data-pvc" #"{{ facturascript_db_pvc }}"
 # App de FacturaScript
 facturascript_app_port: 80 #"{{ facturascript_app_port }}"
+facturascriptb_app_nodeport: 30021 # "{{ facturascriptb_app_nodeport }}"
 facturascript_app_volume: "facturascript-app-data" #"{{ facturascript_app_volume }}"
 facturascript_app_data_pvc: "facturascript-app-data-pvc" #"{{ facturascript_app_data_pvc }}"
 facturascript_app_selector: "facturascript-app" #"{{ facturascript_app_selector }}"
 
 # ---  Variables para desplegar Nextcloud  --- 
 nextcloud_port: 80 #"{{ nextcloud_port }}"
+nextcloud_nodeport: 30010 # "{{ nextcloud_nodeport }}"
 nextcloud_selector: "nextcloud" #"{{ nextcloud_selector }}"
 nextcloud_volume: "nextcloud-data" #"{{ nextcloud_volume }}"
 nextcloud_pvc: "nextcloud-data-pvc" #"{{ nextcloud_pvc }}"
