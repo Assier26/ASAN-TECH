@@ -1,0 +1,24 @@
+---
+# roles/despliegue-dinamico-servicios/tasks/main.yml
+
+- name: Verificar que el Ingress Controller esté instalado
+  command: kubectl get deployment -n ingress-nginx ingress-nginx-controller
+  register: ingress_status
+  ignore_errors: yes
+
+- name: Fallar si el Ingress Controller no está instalado
+  fail:
+    msg: "El Ingress Controller no está instalado. Ejecuta el playbook principal primero."
+  when: ingress_status.rc != 0
+
+# incluir las tareas de despliegue de los servicios
+- name: Desplegar Nextcloud
+  include_tasks: nextcloud.yml
+  when: servicio_elegido == 'nextcloud'
+
+- name: Desplegar FacturaScript
+  include_tasks: facturascript.yml
+  when: servicio_elegido == 'facturascript'
+
+
+# 
