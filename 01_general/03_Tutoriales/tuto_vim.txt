@@ -1,5 +1,0 @@
-Para copiar bloques de texto:
-    1 - esc (modo visual)
-    2 - cntrl + v (para selecionar)
-    3 - y (copiar)
-    4 - p (pegar)
