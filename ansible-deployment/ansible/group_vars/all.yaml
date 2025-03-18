@@ -22,14 +22,14 @@ web_app_name_volume: "volume-asantech" #{{ web_app_name_volume }}"
 servicio_elegido: "{{ servicio }}"
 
 # ---  Variables para desplegar la base de datos  --- 
-db_name: "midb" #"{{ db_name }}" Nombre del Despliegue y servicio
+db_name: "mi-db" #"{{ db_name }}"
 db_image: "mariadb:10.11" #"{{ db_image }}"
 db_root_password: "contrasenia" #"{{ db_root_password }}"
 db_user: "admin" #"{{ db_user }}"
-db_password: "micontrasenia"    #"{{ db_password }}"
-db_database: "midb" #"{{ db_database }}"
+db_password: "mi-contrasenia"    #"{{ db_password }}"
+db_database: "mi_db" #"{{ db_database }}"
 db_port: 3306 #"{{ db_port }}"
-db_namespace: "midb" #"{{ db_namespace }}"
+db_namespace: "mi-db" #"{{ db_namespace }}"
 db_volume_path: "/var/lib/mysql" #"{{ db_volume_path }}"
 db_volume_name: "mariadb-data" #"{{ db_volume_name }}"
 

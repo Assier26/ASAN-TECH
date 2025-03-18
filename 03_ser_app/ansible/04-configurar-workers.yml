@@ -1,5 +1,0 @@
----
-- hosts: workers
-  become: yes
-  roles:
-    - kubernetes-worker
