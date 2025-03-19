@@ -1,0 +1,194 @@
+---
+
+- name: Habilitamos puertos usados por Kubernets Master 6443
+  firewalld:
+    port: 6443/tcp
+    permanent: true
+    state: enabled
+  become: yes
+
+- name: Habilitamos puertos usados por Kubernets Master 2379-2380 tcp
+  firewalld:
+    port: 2379-2380/tcp
+    permanent: true
+    state: enabled
+  become: yes
+
+- name: Habilitamos puertos usados por Kubernets Master 10250-10252 tcp
+  firewalld:
+    port: 10250-10252/tcp
+    permanent: true
+    state: enabled
+  become: yes
+
+- name: Habilitamos puertos usados por Kubernets Master 10255 tcp
+  firewalld:
+    port: 10255/tcp
+    permanent: true
+    state: enabled
+  become: yes
+  
+- name: Agregando regla para permitir el acceso de los workers al master
+  firewalld:
+    rich_rule: "rule family=ipv4 source address={{ hostvars[item].ansible_host }}/32 accept"
+    permanent: true
+    state: enabled
+  when: hostvars[item].ansible_host is defined
+  with_items: "{{ groups.workers }}"
+  become: yes
+
+- debug:
+    msg: "Red Docker detectada: {{ docker_network }}"
+#- debug:
+#    msg: "Red Docker formato CIDR: {{ docker_network | ipaddr('net') }}"
+
+# Para usar la funcion ipaddr() es necesario instalar el módulo netaddr: sudo pip3 install netaddr
+- name: Agregando regla para permitir el acceso de los contenedores al master localhost
+  firewalld:
+    rich_rule: "rule family=ipv4 source address={{ docker_network }} accept"
+#    rich_rule: "rule family=ipv4 source address={{ docker_network | ipaddr('net') }} accept"
+    permanent: true
+    zone: public
+    state: enabled
+  become: yes
+
+- name: Reiniciando el servicio Firewalld 
+  systemd:
+    name: firewalld
+    state: restarted
+  become: yes
+
+- name: Descargando imágenes requeridas por Kubernetes
+  shell: kubeadm config images pull
+  become: yes
+  
+- debug:
+    msg: "Se ejecutara: kubeadm init --apiserver-advertise-address {{ ansible_host }} --pod-network-cidr {{ pod_network }}"
+    
+- name: Instalamos el plugin CNI de kubernetes y definimos la red de los PODs
+  shell: "kubeadm init --apiserver-advertise-address {{ ansible_host }} --pod-network-cidr {{ pod_network }}"
+  register: kubeadd_cmd
+  become: yes
+
+- name: Mostrando la salida de la ejecución del kubeadm init
+  debug:
+    msg: "{{ kubeadd_cmd.stdout_lines }}"
+  
+- name: Extrayendo el hash CRT CA del Master
+  shell: openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | sha256sum
+  register: cert_out
+  become: yes
+  
+- name: Limpiando el Hash CRT
+  set_fact: 
+    cert_hash: "{{ cert_out.stdout | regex_search('^[a-f0-9]{64}') }}"
+  
+- name: Mostramos el Hash CRT extraido
+  debug:
+    msg: "{{ cert_hash }}"
+
+- name: Extrayendo el token del Master en formato JSON
+  shell: kubeadm token list -o json
+  register: token_out
+  become: yes
+  
+- name: Limpiando el Token
+  set_fact: 
+    token_hash: "{{ token_out.stdout | from_json | json_query('token') }}"
+  
+- name: Mostramos el Token extraido
+  debug:
+    msg: "{{ token_hash }}"
+  
+- name: Creamos el directorio .kube
+  file:
+    path: /root/.kube
+    state: directory
+  become: yes
+
+- name: Autorizando al usuario root acceder al cluster Kubernetes
+  copy:
+    src: /etc/kubernetes/admin.conf
+    dest: /root/.kube/config
+    remote_src: yes
+    owner: root
+    group: root
+  become: yes
+
+## Instalamos la SDN Calico o Flannel ##
+- name: Instalamos la SDN Flannel para Azure
+  shell: kubectl apply -f https://docs.projectcalico.org/manifests/canal.yaml
+  register: kubectl_sdn
+  become: yes
+  when: sdn == 'flannel'
+
+- name: Mostramos el resultado de la instalación de la SDN Flannel
+  debug:
+    msg: "{{ kubectl_sdn.stdout_lines }}"
+  when: sdn == 'flannel'
+
+- name: Instalamos el operador de Tigera
+  shell: kubectl create -f https://docs.projectcalico.org/manifests/tigera-operator.yaml
+  register: kubectl_operator
+  become: yes
+  when: sdn == 'calico'
+
+- name: Copiando el custom resources de Calico
+  copy:
+    src: custom-resources.yaml
+    dest: /root/custom-resources.yaml
+    mode: '0644'
+  become: yes
+  when: sdn == 'calico'
+  
+- name: Instalamos la SDN Calico
+  shell: kubectl apply -f /root/custom-resources.yaml
+  register: kubectl_sdn
+  become: yes
+  when: sdn == 'calico'
+
+- name: Mostramos el resultado de la instalación de la SDN Calico
+  debug:
+    msg: "{{ kubectl_sdn.stdout_lines }}"
+  when: sdn == 'calico'
+  
+- name: Desplegando el Nginx Ingress Controller
+  shell: kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.0.4/deploy/static/provider/baremetal/deploy.yaml
+  register: kubectl_nginxic
+  become: yes
+  
+- name: Mostramos el resultado de la instalación del Nginx Ingress Controller
+  debug:
+    msg: "{{ kubectl_nginxic.stdout_lines }}"
+  
+- name: Creando el usuario kubeadmin
+  user:
+    name: kubeadmin
+    password: '$6$s3cr3t.s4lt$j3SHtpVd9BgXbQQKpIGiD0nxZdswKkT/mmxmoeTl1I2XQp6Pq.kwfPBErvgOxpOswooWwi6SqmHEmS1T6FxcZ.' ## password='kubeadmin' encriptado
+    comment: Usuario administrador de Kubernetes
+    create_home: yes
+    home: /home/kubeadmin
+  become: yes
+
+- name: Creamos el directorio .kube para usuario kubeadmin
+  file:
+    path: /home/kubeadmin/.kube
+    state: directory
+  become: yes
+
+- name: Autorizando al usuario kubeadmin acceder al cluster Kubernetes
+  copy:
+    src: /etc/kubernetes/admin.conf
+    dest: /home/kubeadmin/.kube/config
+    remote_src: yes
+    owner: kubeadmin
+    group: kubeadmin
+  become: yes
+
+- name: Brindando al usuario kubeadmin permisos sudo
+  lineinfile:
+    dest: /etc/sudoers.d/kubeadmin
+    state: present
+    create: yes
+    line: 'ALL   ALL = (ALL) NOPASSWD: ALL'
+  become: yes

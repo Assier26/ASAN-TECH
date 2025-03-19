@@ -1,0 +1,5 @@
+1- https://www.campusciberseguridad.com/blog/item/162-automatizando-despliegues-con-kubernetes-y-ansible
+
+2- https://johnruizcampos.com/como-instalar-kubernetes-en-linux-con-ansible/
+
+	Repositorio: https://github.com/jruizcampos/kubernetes-deploy/blob/main/ansible/roles/tests/tasks/main.yaml
